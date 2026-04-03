@@ -37,6 +37,7 @@ coding!
 - Ivan Rebolledo - [GitHub](https://github.com/ivannissimrch) / [LinkedIn](https://www.linkedin.com/in/ivan-rebolledo-012b17244/)
 - Lilla Tóth - [GitHub](https://github.com/Lilla-ctrl) / [LinkedIn](https://www.linkedin.com/in/lillatoth216/)
 - Yangchen Dema(Scrum Master): [GitHub](https://github.com/dema66) / [LinkedIn](https://www.linkedin.com/in/yangchendema/)
+- Chinedu Olekah: [GitHub](https://github.com/kenako1) / [LinkedIn](www.linkedin.com/in/chinedu-olekah)
 
   ...
 
