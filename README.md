@@ -36,7 +36,7 @@ coding!
 
 - Ivan Rebolledo - [GitHub](https://github.com/ivannissimrch) / [LinkedIn](https://www.linkedin.com/in/ivan-rebolledo-012b17244/)
 - Lilla Tóth - [GitHub](https://github.com/Lilla-ctrl) / [LinkedIn](https://www.linkedin.com/in/lillatoth216/)
-- Teammate name #2: [GitHub](https://github.com/ghaccountname) / [LinkedIn](https://linkedin.com/in/liaccountname)
+- Chinedu Olekah: [GitHub](https://github.com/kenako1) / [LinkedIn](www.linkedin.com/in/chinedu-olekah)
 
   ...
 
