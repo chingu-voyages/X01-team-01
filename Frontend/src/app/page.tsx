@@ -1,13 +1,40 @@
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-700 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Button variant="default" size="lg">
-          Get Started
-        </Button>
-      </main>
-    </div>
+    <>
+      <section className="container flex flex-col items-start justify-center gap-12 section-padding">
+        <h1 className="text-4xl font-bold">Welcome</h1>
+        <p className="max-w-xl text-lg text-muted-foreground">
+          This is the home page. Lorem ipsum dolor sit amet consectetur
+        </p>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 w-full">
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle>Title here</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Some content</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle>Title here</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Some content</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle>Title here</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Some content</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    </>
   );
 }
