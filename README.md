@@ -38,7 +38,7 @@ coding!
 - Lilla Tóth - [GitHub](https://github.com/Lilla-ctrl) / [LinkedIn](https://www.linkedin.com/in/lillatoth216/)
 - Yangchen Dema(Scrum Master): [GitHub](https://github.com/dema66) / [LinkedIn](https://www.linkedin.com/in/yangchendema/)
 - Chinedu Olekah: [GitHub](https://github.com/kenako1) / [LinkedIn](www.linkedin.com/in/chinedu-olekah)
-
+- Omar Ramos-Correa:[GitHub](https://github.com/oramos-correa) / [LinkedIn](https://www.linkedin.com/in/omar-ramos-correa-7621253b2)
   ...
 
 - Teammate name #n: [GitHub](https://github.com/ghaccountname) / [LinkedIn](https://linkedin.com/in/liaccountname)
