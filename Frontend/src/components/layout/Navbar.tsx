@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const HEADER_HEIGHT = 80;
 
 const ITEMS = [
-  { label: "Home", href: "/" },
+  { label: "Home", href: "/home" },
   { label: "About", href: "/about" },
 ];
 
