@@ -1,50 +1,46 @@
 "use client";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppSelector } from "@/redux/hooks";
+import FormSection from "@/components/FormSection";
+import ProgressLoader from "@/components/ProgressLoader";
+import SubmitButton from "@/components/SubmitButton";
+// import { useAppSelector } from "@/redux/hooks";
+import { type FieldId } from "@/const/fields";
+import { useForm } from "react-hook-form";
 
 export default function Home() {
-  const user = useAppSelector((state) => state.auth.user);
+  // const user = useAppSelector((state) => state.auth.user);
+
+  const {
+    control,
+    handleSubmit,
+    resetField,
+    watch,
+    formState: { isValid },
+  } = useForm({
+    mode: "onTouched",
+    defaultValues: {
+      persona: "",
+      context: "",
+      task: "",
+      output: "",
+      constraint: "",
+    },
+  });
+
+  async function onSubmit(data: Record<FieldId, string>) {
+    console.log("Form submitted with values:", data);
+  }
 
   return (
     <>
-      <section className="container flex flex-col items-start justify-center gap-12 section-padding">
-        <h1 className="text-4xl font-bold">
-          Welcome{user?.name ? ` ${user.name}` : ""}
-        </h1>
-
-        <p className="max-w-xl text-lg text-muted-foreground">
-          This is the home page. Lorem ipsum dolor sit amet consectetur
-        </p>
-
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 w-full">
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Title here here</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Some content</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Title here</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Some content</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Title here</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Some content</p>
-            </CardContent>
-          </Card>
-        </div>
+      <section className="container  section-padding">
+        <FormSection control={control} resetField={resetField} watch={watch} />
+        <ProgressLoader />
+        <SubmitButton
+          isValid={isValid}
+          handleSubmit={handleSubmit}
+          onSubmit={onSubmit}
+          isLoading={false}
+        />
       </section>
     </>
   );
