@@ -10,12 +10,13 @@ export default function Footer() {
   return (
     <footer className="bg-background relative overflow-hidden flex justify-center border-t border-border p-4 w-full">
       <div className="container">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="">
-            <Image src={ChinguLogo} alt="Chingu logo" className="w-10"/>
+            <Image src={ChinguLogo} alt="Chingu logo" className="w-8 md:w-10"/>
           </p>
-          <ul className="flex justify-between gap-4">
-            <li className="border-r border-r-black/30 pr-4">
+          <ul className="flex flex-col items-center gap-2 py-2 text-sm
+                        md:flex-row md:justify-between md:gap-4 md:py-0 md:text-base">
+            <li className="md:border-r border-r-black/30 md:pr-4">
               <a
                 href="https://www.linkedin.com/in/lillatoth216/"
                 target="_blank"
@@ -24,7 +25,7 @@ export default function Footer() {
                 Lilla Tóth
               </a>
             </li>
-            <li className="border-r border-r-black/30 pr-4">
+            <li className="md:border-r border-r-black/30 md:pr-4">
               <a
                 href="https://www.linkedin.com/in/ivan-rebolledo-012b17244/"
                 target="_blank"
@@ -33,7 +34,7 @@ export default function Footer() {
                 Ivan Rebolledo
               </a>
             </li>
-            <li className="border-r border-r-black/30 pr-4">
+            <li className="md:border-r border-r-black/30 md:pr-4">
               <a
                 href="https://www.linkedin.com/in/omar-ramos-correa-7621253b2/"
                 target="_blank"
@@ -42,7 +43,7 @@ export default function Footer() {
                 Omar Ramos-Correa
               </a>
             </li>
-            <li className="border-r border-r-black/30 pr-4">
+            <li className="md:border-r border-r-black/30 md:pr-4">
               <a
                 href="https://www.linkedin.com/in/yangchendema/"
                 target="_blank"
@@ -61,7 +62,7 @@ export default function Footer() {
               </a>
             </li>
           </ul>
-          <p>{formattedDate}</p>
+          <p className="text-sm md:text-base">{formattedDate}</p>
         </div>
       </div>
     </footer>
