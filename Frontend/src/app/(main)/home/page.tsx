@@ -1,6 +1,7 @@
 "use client";
 import FormSection from "@/components/FormSection";
 import ProgressLoader from "@/components/ProgressLoader";
+import ResponseCard from "@/components/ResponseCard";
 import SubmitButton from "@/components/SubmitButton";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
@@ -50,6 +51,7 @@ export default function Home() {
           onSubmit={onSubmit}
           isLoading={false}
         />
+        <ResponseCard />
       </section>
     </>
   );
