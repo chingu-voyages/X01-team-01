@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function LoginButton() {
   return (
     <Link href="/login" aria-label="AI Helper login">
-      <Button>Log in</Button>
+      <Button className="w-20">Log in</Button>
     </Link>
   );
 }
