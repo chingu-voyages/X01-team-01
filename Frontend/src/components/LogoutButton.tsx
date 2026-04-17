@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 
 export default function LogoutButton() {
   return (
-    <Button>
+    <Button variant={"outline"} className="w-20">
       Log out
     </Button>
   )
