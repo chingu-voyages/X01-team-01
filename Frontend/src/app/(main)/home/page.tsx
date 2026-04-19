@@ -1,7 +1,9 @@
 "use client";
 import FormSection from "@/components/FormSection";
 import ProgressLoader from "@/components/ProgressLoader";
+import ResultSkeleton from "@/components/ResultSkeleton";
 import SubmitButton from "@/components/SubmitButton";
+import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
@@ -10,6 +12,8 @@ import { useState } from "react";
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
   const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     control,
@@ -30,6 +34,11 @@ export default function Home() {
 
   async function onSubmit(data: Record<FieldId, string>) {
   setIsLoading(true);
+  setResult(null);
+  setError(null);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
   const prompt = `
     Persona: ${data.persona}
@@ -46,14 +55,25 @@ export default function Home() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ prompt }),
+      signal: controller.signal,
     });
 
-    const result = await res.json();
+    clearTimeout(timeout);
 
-    console.log("Gemini response:", result.text);
-  } catch (err) {
-    console.error(err);
+    if (!res.ok) {
+      throw new Error("Server error. Please try again.");
+    }
+
+    const result = await res.json();
+    setResult(result.text);
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      setError("Request timed out. Please try again.");
+    } else {
+      setError("Something went wrong. Please try again.");
+    }
   } finally {
+    clearTimeout(timeout);
     setIsLoading(false);
   }
 }
@@ -62,7 +82,37 @@ export default function Home() {
     <>
       <section className="container  section-padding">
         <FormSection control={control} resetField={resetField} watch={watch} />
-        <ProgressLoader />
+
+        {isLoading && (
+          <>
+            <ResultSkeleton />
+          </>
+        )}
+
+        {!isLoading && result && (
+          <div className="mt-6 p-4 border rounded bg-white prose">
+            <ReactMarkdown>{result}</ReactMarkdown>
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="mt-6 p-4 border rounded bg-red-50 text-red-600">
+            <p>{error}</p>
+            <button
+              onClick={handleSubmit(onSubmit)}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !result && !error && (
+          <div className="mt-6 text-gray-500 italic">
+            Your generated response will appear here once you submit the form.
+          </div>
+        )}
+
         <SubmitButton
           isValid={isValid}
           handleSubmit={handleSubmit}
