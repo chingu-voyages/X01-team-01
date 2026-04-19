@@ -2,6 +2,7 @@
 import FormSection from "@/components/FormSection";
 import ProgressLoader from "@/components/ProgressLoader";
 import ResultSkeleton from "@/components/ResultSkeleton";
+import ResponseCard from "@/components/ResponseCard";
 import SubmitButton from "@/components/SubmitButton";
 import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
@@ -81,6 +82,15 @@ export default function Home() {
   return (
     <>
       <section className="container  section-padding">
+        <div className="mb-10 text-center">
+          <h1 className="mb-2 tracking-tighter leading-tight font-medium">AI Helper</h1>
+          <h2 className="mb-2 tracking-tighter font-light">
+            Sculpt your intent into editorial-grade prompts using the Pentagram
+            framework.
+          </h2>
+          <h3 className="tracking-tighter font-light">Precision architecture for advanced reasoning.</h3>
+        </div>
+
         <FormSection control={control} resetField={resetField} watch={watch} />
 
         {isLoading && (
@@ -119,6 +129,7 @@ export default function Home() {
           onSubmit={onSubmit}
           isLoading={isLoading}
         />
+        <ResponseCard />
       </section>
     </>
   );
