@@ -129,7 +129,7 @@ export default function Home() {
           onSubmit={onSubmit}
           isLoading={isLoading}
         />
-        <ResponseCard />
+        {/*<ResponseCard />*/}
       </section>
     </>
   );
