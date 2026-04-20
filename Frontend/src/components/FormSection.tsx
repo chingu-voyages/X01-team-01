@@ -2,30 +2,41 @@ import { FieldId, FIELDS } from "@/const/fields";
 import { Card, CardContent } from "./ui/card";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { RotateCcw } from "lucide-react";
+
 import {
   Control,
   Controller,
+  UseFormHandleSubmit,
   UseFormResetField,
-  UseFormWatch,
+  useWatch,
 } from "react-hook-form";
 import { Textarea } from "./ui/textarea";
+import { PopOverInfoIcon } from "./PopOverInfoIcon";
+import { RotateCcw } from "lucide-react";
 
 type FormValues = Record<FieldId, string>;
 
 interface FormSectionProps {
   control: Control<FormValues>;
   resetField: UseFormResetField<FormValues>;
-  watch: UseFormWatch<FormValues>;
+  onSubmit: (data: FormValues) => Promise<void>;
+  handleSubmit: UseFormHandleSubmit<FormValues>;
 }
 
 export default function FormSection({
   control,
   resetField,
-  watch,
+  onSubmit,
+  handleSubmit,
 }: FormSectionProps) {
+  const values = useWatch({ control });
+
   return (
-    <form className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-3 gap-4">
+    <form
+      className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-3 gap-4"
+      id="pentagram-form"
+      onSubmit={handleSubmit(onSubmit)}
+    >
       {FIELDS.map((field, id) => (
         <Card
           key={field.id}
@@ -33,17 +44,19 @@ export default function FormSection({
         >
           <CardContent>
             <div className="flex items-center justify-between">
-              <Label
-                htmlFor={field.id}
-                className="text-xs font-semibold mb-1 block  uppercase"
-              >
-                {field.label}
-              </Label>
+              <div className="flex items-center gap-2">
+                <Label
+                  htmlFor={field.id}
+                  className="text-xs font-semibold mb-1 block  uppercase"
+                >
+                  {field.label}
+                </Label>
+                <PopOverInfoIcon />
+              </div>
 
               <Button
                 onClick={() => resetField(field.id)}
-                // eslint-disable-next-line react-hooks/incompatible-library
-                disabled={watch(field.id) === ""}
+                disabled={!values[field.id]}
                 variant="ghost"
                 className="hover:bg-transparent"
               >
