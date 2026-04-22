@@ -37,12 +37,12 @@ export default function FormSection({
           key={field.id}
           className={`${index === 2 ? "md:col-span-2 " : ""} bg-white rounded-xl shadow-sm border border-neutral-200`}
         >
-          <CardContent className="mt-8 md:mt-10">
+          <CardContent className="mt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 justify-center">
                 <Label
                   htmlFor={field.id}
-                  className="text-xs font-semibold mb-1 block  uppercase"
+                  className="text-xs font-semibold  block  uppercase"
                 >
                   {field.label}
                 </Label>
