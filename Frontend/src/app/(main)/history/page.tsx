@@ -1,4 +1,4 @@
-export default function About() {
+export default function History() {
   return (
     <section className="container flex flex-col items-start justify-center gap-12 section-padding">
       <p>
