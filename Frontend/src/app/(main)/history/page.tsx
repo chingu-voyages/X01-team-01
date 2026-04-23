@@ -1,65 +1,33 @@
-import { User } from "lucide-react";
+import PromptCard from "@/components/PromptCard";
 import Link from "next/link";
 
 export default function History() {
+  const hasPrompts = true;
+
   return (
-    <div className="container">
-      <header className="mt-6 md:mt-2">
-        <div className="flex flex-col gap-2 items-center md:flex-row md:justify-between">
-          <div className="flex items-center">
-            <div className="w-8 h-8 md:w-20 md:h-20 rounded-full bg-gray-300 flex items-center justify-center">
-              <User />
-            </div>
-            <div className="flex flex-col justify-center px-4">
-              <div className="text-sm md:text-3xl font-semibold">Jane Doe</div>
-              <div className="text-xs md:text-sm">janedoe@email.com</div>
-            </div>
+    <>
+      {hasPrompts ? (
+        <div>
+          <div className="grid grid-cols-1 gap-4 mt-8">
+            <PromptCard />
+            <PromptCard />
+            <PromptCard />
           </div>
-          <div className="flex gap-2 justify-center items-center">
-            <div>
-              <button
-                type="button"
-                className="border border-gray-300 px-4 py-2 rounded whitespace-nowrap text-xs md:text-base"
-              >
-                Edit profile
-              </button>
-            </div>
-            <div>
-              <Link
-                href="/home"
-                className="bg-gray-300 px-4 py-2 rounded inline-block whitespace-nowrap text-xs md:text-base"
-              >
-                New Prompt
-              </Link>
-            </div>
-          </div>
+          <button className="border border-gray-300 px-4 py-2 my-10 rounded whitespace-nowrap block mx-auto text-xs md:text-base">
+            Show older prompts
+          </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-          <div className="bg-gray-200 p-4 rounded-lg">
-            <div className="uppercase text-xs md:text-sm">
-              Prompts generated
-            </div>
-            <div className="text-5xl md:text-6xl mt-5">42</div>
-          </div>
-          <div className="bg-gray-200 p-4 rounded-lg">
-            <div className="uppercase text-xs md:text-sm">Average length</div>
-            <div className="flex items-baseline text-5xl md:text-6xl mt-5">
-              120
-              <p className="text-sm md:text-lg">words</p>
-            </div>
-          </div>
-          <div className="col-span-2 bg-gray-200 p-4 rounded-lg">
-            <div className="uppercase text-xs md:text-sm">Rating</div>
-            <div className="text-5xl md:text-6xl mt-5">94%</div>
-            <div className="w-full h-2 rounded-full bg-gray-600">
-              <div style={{width: "94%"}} className="h-2 rounded-full bg-blue-500 transition-all duration-500"></div>
-            </div>
-          </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-black/60 mb-4">No prompts generated yet.</p>
+          <Link
+            href="/home"
+            className="border border-black px-6 py-2 rounded-full hover:bg-black hover:text-white transition-colors"
+          >
+            Create your first prompt
+          </Link>
         </div>
-      </header>
-      <main>
-        <div>Prompt History</div>
-      </main>
-    </div>
+      )}
+    </>
   );
 }
