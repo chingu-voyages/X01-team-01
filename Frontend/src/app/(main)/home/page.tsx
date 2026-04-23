@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -18,6 +18,7 @@ export default function Home() {
   const {
     control,
     handleSubmit,
+    reset,
     resetField,
     watch,
     formState: { isValid },
@@ -31,6 +32,34 @@ export default function Home() {
       constraint: "",
     },
   });
+
+  //scoring logic
+  const [scores, setScores] = useState<{
+    clarity: number;
+    specificity: number;
+    format_guidance: number;
+    summary: string;
+    improved_prompt?: string | null;
+    changes?: string[];
+  } | null>(null);
+
+  const [isScoring, setIsScoring] = useState(false);
+  const [scoreError, setScoreError] = useState<string | null>(null);
+
+  const formValues = watch();
+
+useEffect(() => {
+  setScores(null);
+  setScoreError(null);
+}, [
+  formValues.persona,
+  formValues.context,
+  formValues.task,
+  formValues.output,
+  formValues.constraint
+]);
+
+//
 
   async function onSubmit(data: Record<FieldId, string>) {
     setIsLoading(true);
@@ -77,6 +106,64 @@ export default function Home() {
       setIsLoading(false);
     }
   }
+
+async function onScore(data: Record<FieldId, string>) {
+  setIsScoring(true);
+  setScores(null);
+  setScoreError(null);
+
+  const prompt = `
+    Persona: ${data.persona}
+    Context: ${data.context}
+    Task: ${data.task}
+    Output: ${data.output}
+    Constraint: ${data.constraint}
+  `;
+
+  try {
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+    console.log("SCORE RESPONSE:", data);
+    setScores(data);
+  } catch {
+    setScoreError("Unable to score your prompt. Please try again.");
+  } finally {
+    setIsScoring(false);
+  }
+}
+
+function getColor(score: number) {
+  if (score <= 4) return "text-red-500";
+  if (score <= 7) return "text-yellow-500";
+  return "text-green-500";
+}
+
+function parsePrompt(prompt: string) {
+  const get = (label: string) => {
+    const match = prompt.match(
+      new RegExp(`${label}:([\\s\\S]*?)(?=\\n\\w+:|$)`)
+    );
+    return match ? match[1].trim() : "";
+  };
+
+  return {
+    persona: get("Persona"),
+    context: get("Context"),
+    task: get("Task"),
+    output: get("Output"),
+    constraint: get("Constraint"),
+  };
+}
+
 
   return (
     <>
@@ -133,6 +220,83 @@ export default function Home() {
           isLoading={isLoading}
         />
         {/*<ResponseCard />*/}
+
+        {result && (
+          <button
+            onClick={handleSubmit(onScore)}
+            disabled={isScoring}
+            className="mt-4 px-4 py-2 bg-black text-white rounded"
+          >
+            {scores ? "Re-score prompt" : "Score Prompt"}
+          </button>
+        )}
+
+        {isScoring && <ResultSkeleton />}
+
+        {scores && !isScoring && (
+          <div className="mt-6 p-4 border rounded bg-white">
+            <p className={getColor(scores.clarity)}>
+              Clarity: {scores.clarity}/10
+            </p>
+            <p className={getColor(scores.specificity)}>
+              Specificity: {scores.specificity}/10
+            </p>
+            <p className={getColor(scores.format_guidance)}>
+              Format Guidance: {scores.format_guidance}/10
+            </p>
+            <p className="mt-2 text-gray-600">{scores.summary}</p>
+          </div>
+        )}
+
+        {scoreError && !isScoring && (
+          <div className="mt-6 p-4 border rounded bg-red-50 text-red-600">
+            <p>{scoreError}</p>
+            <button
+              onClick={handleSubmit(onScore)}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {scores && !isScoring && (
+          <div className="mt-6 p-4 border rounded bg-gray-50">
+            <h3 className="font-semibold mb-2">Suggested improvement</h3>
+
+            {scores.improved_prompt ? (
+              <>
+                <div className="p-3 bg-white border rounded mb-3 whitespace-pre-wrap">
+                  {scores.improved_prompt}
+                </div>
+
+                <ul className="list-disc pl-5 text-sm text-gray-700 mb-3">
+                  {scores.changes?.map((change, i) => (
+                    <li key={i}>{change}</li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => {
+                    const parsed = parsePrompt(scores.improved_prompt!);
+                    reset(parsed); // ✅ correct way
+
+                    // temp toast
+                    alert("Prompt updated.");
+                  }}
+                  className="px-4 py-2 bg-black text-white rounded"
+                >
+                  Use This Prompt
+                </button>
+              </>
+            ) : (
+              <p className="text-gray-500 italic">
+                No suggestion available.
+              </p>
+            )}
+          </div>
+        )}
+
       </section>
     </>
   );
