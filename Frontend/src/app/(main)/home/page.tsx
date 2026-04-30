@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
+import { shouldShowSuggestion } from "@/app/utils/scoringUtils";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -62,18 +63,16 @@ export default function Home() {
 
   const formValues = watch();
 
-useEffect(() => {
-  setScores(null);
-  setScoreError(null);
-}, [
-  formValues.persona,
-  formValues.context,
-  formValues.task,
-  formValues.output,
-  formValues.constraint
-]);
-
-//
+  useEffect(() => {
+    setScores(null);
+    setScoreError(null);
+  }, [
+    formValues.persona,
+    formValues.context,
+    formValues.task,
+    formValues.output,
+    formValues.constraint,
+  ]);
 
   async function onSubmit(data: Record<FieldId, string>) {
     setIsLoading(true);
@@ -122,42 +121,42 @@ useEffect(() => {
   }
 
   async function onScore(formData: Record<FieldId, string>) {
-  setIsScoring(true);
-  setScores(null);
-  setScoreError(null);
+    setIsScoring(true);
+    setScores(null);
+    setScoreError(null);
 
-  try {
-    const res = await fetch("/api/score", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        persona: formData.persona,
-        context: formData.context,
-        task: formData.task,
-        output: formData.output,
-        constraint: formData.constraint,
-      }),
-    });
+    try {
+      const res = await fetch("/api/score", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          persona: formData.persona,
+          context: formData.context,
+          task: formData.task,
+          output: formData.output,
+          constraint: formData.constraint,
+        }),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Request failed: ${res.status} - ${text}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Request failed: ${res.status} - ${text}`);
+      }
+
+      const result = await res.json();
+      console.log("SCORE RESPONSE:", result);
+      setScores(result);
+    } catch (err) {
+      console.error("Scoring error:", err);
+      setScoreError("Unable to score your prompt. Please try again.");
+    } finally {
+      setIsScoring(false);
     }
-
-    const result = await res.json();
-    console.log("SCORE RESPONSE:", result);
-    setScores(result);
-  } catch (err) {
-    console.error("Scoring error:", err);
-    setScoreError("Unable to score your prompt. Please try again.");
-  } finally {
-    setIsScoring(false);
   }
-}
 
-/*async function onScore(formData: Record<FieldId, string>) {
+  /*async function onScore(formData: Record<FieldId, string>) {
   setIsScoring(true);
   setScores(null);
   setScoreError(null);
@@ -195,29 +194,28 @@ useEffect(() => {
   }
 }*/
 
-function getColor(score: number) {
-  if (score <= 4) return "text-red-500";
-  if (score <= 7) return "text-yellow-500";
-  return "text-green-500";
-}
+  function getColor(score: number) {
+    if (score <= 4) return "text-red-500";
+    if (score <= 7) return "text-yellow-500";
+    return "text-green-500";
+  }
 
-function parsePrompt(prompt: string) {
-  const get = (label: string) => {
-    const match = prompt.match(
-      new RegExp(`${label}:([\\s\\S]*?)(?=\\n\\w+:|$)`)
-    );
-    return match ? match[1].trim() : "";
-  };
+  function parsePrompt(prompt: string) {
+    const get = (label: string) => {
+      const match = prompt.match(
+        new RegExp(`${label}:([\\s\\S]*?)(?=\\n\\w+:|$)`),
+      );
+      return match ? match[1].trim() : "";
+    };
 
-  return {
-    persona: get("Persona"),
-    context: get("Context"),
-    task: get("Task"),
-    output: get("Output"),
-    constraint: get("Constraint"),
-  };
-}
-
+    return {
+      persona: get("Persona"),
+      context: get("Context"),
+      task: get("Task"),
+      output: get("Output"),
+      constraint: get("Constraint"),
+    };
+  }
 
   return (
     <>
@@ -287,7 +285,7 @@ function parsePrompt(prompt: string) {
 
         {isScoring && <ResultSkeleton />}
 
-        {scores && !isScoring && (
+        {scores && !isScoring && shouldShowSuggestion(scores) && (
           <div className="mt-6 p-4 border rounded bg-white">
             <p className={getColor(scores.global_scores.clarity)}>
               Clarity: {scores.global_scores.clarity}/10
@@ -301,9 +299,7 @@ function parsePrompt(prompt: string) {
               Format Guidance: {scores.global_scores.format_guidance}/10
             </p>
 
-            <p className="mt-2 font-semibold">
-              Overall: {scores.overall}/10
-            </p>
+            <p className="mt-2 font-semibold">Overall: {scores.overall}/10</p>
 
             <p className="mt-2 text-gray-600">
               Weakest field: {scores.weakest_field}
@@ -339,7 +335,7 @@ function parsePrompt(prompt: string) {
 
                 <button
                   onClick={() => {
-                   reset({
+                    reset({
                       ...watch(),
                       [scores.suggestion!.field]: scores.suggestion!.improved,
                     });
@@ -357,7 +353,6 @@ function parsePrompt(prompt: string) {
             )}
           </div>
         )}
-
       </section>
     </>
   );
