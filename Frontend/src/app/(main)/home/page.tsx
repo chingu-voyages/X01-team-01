@@ -35,12 +35,26 @@ export default function Home() {
 
   //scoring logic
   const [scores, setScores] = useState<{
-    clarity: number;
-    specificity: number;
-    format_guidance: number;
-    summary: string;
-    improved_prompt?: string | null;
-    changes?: string[];
+    global_scores: {
+      clarity: number;
+      specificity: number;
+      format_guidance: number;
+    };
+    overall: number;
+    field_grades: {
+      persona: number;
+      context: number;
+      task: number;
+      output: number;
+      constraint: number;
+    };
+    weakest_field: "persona" | "context" | "task" | "output" | "constraint";
+    suggestion: {
+      field: "persona" | "context" | "task" | "output" | "constraint";
+      original: string;
+      improved: string;
+      explanation: string;
+    } | null;
   } | null>(null);
 
   const [isScoring, setIsScoring] = useState(false);
@@ -67,7 +81,7 @@ useEffect(() => {
     setError(null);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeout = setTimeout(() => controller.abort(), 50000); // 50s timeout
 
     const prompt = `
     Persona: ${data.persona}
@@ -107,17 +121,53 @@ useEffect(() => {
     }
   }
 
-async function onScore(data: Record<FieldId, string>) {
+  async function onScore(formData: Record<FieldId, string>) {
+  setIsScoring(true);
+  setScores(null);
+  setScoreError(null);
+
+  try {
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        persona: formData.persona,
+        context: formData.context,
+        task: formData.task,
+        output: formData.output,
+        constraint: formData.constraint,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Request failed: ${res.status} - ${text}`);
+    }
+
+    const result = await res.json();
+    console.log("SCORE RESPONSE:", result);
+    setScores(result);
+  } catch (err) {
+    console.error("Scoring error:", err);
+    setScoreError("Unable to score your prompt. Please try again.");
+  } finally {
+    setIsScoring(false);
+  }
+}
+
+/*async function onScore(formData: Record<FieldId, string>) {
   setIsScoring(true);
   setScores(null);
   setScoreError(null);
 
   const prompt = `
-    Persona: ${data.persona}
-    Context: ${data.context}
-    Task: ${data.task}
-    Output: ${data.output}
-    Constraint: ${data.constraint}
+    Persona: ${formData.persona}
+    Context: ${formData.context}
+    Task: ${formData.task}
+    Output: ${formData.output}
+    Constraint: ${formData.constraint}
   `;
 
   try {
@@ -129,17 +179,21 @@ async function onScore(data: Record<FieldId, string>) {
       body: JSON.stringify({ prompt }),
     });
 
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Request failed: ${res.status} - ${text}`);
+    }
 
-    const data = await res.json();
-    console.log("SCORE RESPONSE:", data);
-    setScores(data);
-  } catch {
+    const result = await res.json();
+    console.log("SCORE RESPONSE:", result);
+    setScores(result);
+  } catch (err) {
+    console.error("Scoring error:", err);
     setScoreError("Unable to score your prompt. Please try again.");
   } finally {
     setIsScoring(false);
   }
-}
+}*/
 
 function getColor(score: number) {
   if (score <= 4) return "text-red-500";
@@ -235,16 +289,25 @@ function parsePrompt(prompt: string) {
 
         {scores && !isScoring && (
           <div className="mt-6 p-4 border rounded bg-white">
-            <p className={getColor(scores.clarity)}>
-              Clarity: {scores.clarity}/10
+            <p className={getColor(scores.global_scores.clarity)}>
+              Clarity: {scores.global_scores.clarity}/10
             </p>
-            <p className={getColor(scores.specificity)}>
-              Specificity: {scores.specificity}/10
+
+            <p className={getColor(scores.global_scores.specificity)}>
+              Specificity: {scores.global_scores.specificity}/10
             </p>
-            <p className={getColor(scores.format_guidance)}>
-              Format Guidance: {scores.format_guidance}/10
+
+            <p className={getColor(scores.global_scores.format_guidance)}>
+              Format Guidance: {scores.global_scores.format_guidance}/10
             </p>
-            <p className="mt-2 text-gray-600">{scores.summary}</p>
+
+            <p className="mt-2 font-semibold">
+              Overall: {scores.overall}/10
+            </p>
+
+            <p className="mt-2 text-gray-600">
+              Weakest field: {scores.weakest_field}
+            </p>
           </div>
         )}
 
@@ -264,24 +327,22 @@ function parsePrompt(prompt: string) {
           <div className="mt-6 p-4 border rounded bg-gray-50">
             <h3 className="font-semibold mb-2">Suggested improvement</h3>
 
-            {scores.improved_prompt ? (
+            {scores.suggestion ? (
               <>
                 <div className="p-3 bg-white border rounded mb-3 whitespace-pre-wrap">
-                  {scores.improved_prompt}
+                  {scores.suggestion.improved}
                 </div>
 
-                <ul className="list-disc pl-5 text-sm text-gray-700 mb-3">
-                  {scores.changes?.map((change, i) => (
-                    <li key={i}>{change}</li>
-                  ))}
-                </ul>
+                <p className="text-sm text-gray-600 mb-3">
+                  {scores.suggestion.explanation}
+                </p>
 
                 <button
                   onClick={() => {
-                    const parsed = parsePrompt(scores.improved_prompt!);
-                    reset(parsed); // ✅ correct way
-
-                    // temp toast
+                   reset({
+                      ...watch(),
+                      [scores.suggestion!.field]: scores.suggestion!.improved,
+                    });
                     alert("Prompt updated.");
                   }}
                   className="px-4 py-2 bg-black text-white rounded"
@@ -291,7 +352,7 @@ function parsePrompt(prompt: string) {
               </>
             ) : (
               <p className="text-gray-500 italic">
-                No suggestion available.
+                No suggestion needed — prompt is strong enough.
               </p>
             )}
           </div>
