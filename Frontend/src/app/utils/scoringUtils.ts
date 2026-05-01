@@ -1,10 +1,29 @@
-import { ScoringResponse } from "@/lib/mockScoringData";
+interface ScoringResponse {
+  global_scores: {
+    clarity: number;
+    specificity: number;
+    format_guidance: number;
+  };
+  overall: number;
+  field_grades: {
+    persona: number;
+    context: number;
+    task: number;
+    output: number;
+    constraint: number;
+  };
+  weakest_field: "persona" | "context" | "task" | "output" | "constraint";
+  suggestion: {
+    field: "persona" | "context" | "task" | "output" | "constraint";
+    original: string;
+    improved: string;
+    explanation: string;
+  } | null;
+}
 
 export const shouldShowSuggestion = (data: ScoringResponse): boolean => {
   //Check global scores
-  const hasLowGlobalScore = Object.values(data.global_scores).some(
-    (score) => score <= 7,
-  );
+  const hasLowOverall = data.overall <= 7;
 
   //Check individual fields
   const hasLowFieldGrade = Object.values(data.field_grades).some(
@@ -13,5 +32,5 @@ export const shouldShowSuggestion = (data: ScoringResponse): boolean => {
 
   //Either is true => show panel
 
-  return hasLowGlobalScore || hasLowFieldGrade;
+  return hasLowOverall || hasLowFieldGrade;
 };
