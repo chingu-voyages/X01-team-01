@@ -15,6 +15,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastScoredValues, setLastScoredValues] = useState<Record<FieldId, string> | null>(null);
 
   const {
     control,
@@ -63,17 +64,15 @@ export default function Home() {
 
   const formValues = watch();
 
-  useEffect(() => {
-    setScores(null);
-    setScoreError(null);
-  }, [
-    formValues.persona,
-    formValues.context,
-    formValues.task,
-    formValues.output,
-    formValues.constraint,
-  ]);
+  // Needed to check whether prompt is the same or has been changed
+  const isSameAsLastScore =
+    !!lastScoredValues &&
+    (Object.keys(lastScoredValues) as FieldId[]).every(
+      (key) =>
+        lastScoredValues[key] === formValues[key]
+    );
 
+    //Sends prompt to api
   async function onSubmit(data: Record<FieldId, string>) {
     setIsLoading(true);
     setResult(null);
@@ -120,6 +119,7 @@ export default function Home() {
     }
   }
 
+  // fetches score from api
   async function onScore(formData: Record<FieldId, string>) {
     setIsScoring(true);
     setScores(null);
@@ -147,7 +147,18 @@ export default function Home() {
 
       const result = await res.json();
       console.log("SCORE RESPONSE:", result);
+
+      const values = {
+        persona: formData.persona,
+        context: formData.context,
+        task: formData.task,
+        output: formData.output,
+        constraint: formData.constraint,
+      };
+
       setScores(result);
+      setLastScoredValues(values);
+      //setHasChangedSinceScore(false);
     } catch (err) {
       console.error("Scoring error:", err);
       setScoreError("Unable to score your prompt. Please try again.");
@@ -156,66 +167,13 @@ export default function Home() {
     }
   }
 
-  /*async function onScore(formData: Record<FieldId, string>) {
-  setIsScoring(true);
-  setScores(null);
-  setScoreError(null);
-
-  const prompt = `
-    Persona: ${formData.persona}
-    Context: ${formData.context}
-    Task: ${formData.task}
-    Output: ${formData.output}
-    Constraint: ${formData.constraint}
-  `;
-
-  try {
-    const res = await fetch("/api/score", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Request failed: ${res.status} - ${text}`);
-    }
-
-    const result = await res.json();
-    console.log("SCORE RESPONSE:", result);
-    setScores(result);
-  } catch (err) {
-    console.error("Scoring error:", err);
-    setScoreError("Unable to score your prompt. Please try again.");
-  } finally {
-    setIsScoring(false);
-  }
-}*/
-
   function getColor(score: number) {
     if (score <= 4) return "text-red-500";
     if (score <= 7) return "text-yellow-500";
     return "text-green-500";
   }
 
-  function parsePrompt(prompt: string) {
-    const get = (label: string) => {
-      const match = prompt.match(
-        new RegExp(`${label}:([\\s\\S]*?)(?=\\n\\w+:|$)`),
-      );
-      return match ? match[1].trim() : "";
-    };
-
-    return {
-      persona: get("Persona"),
-      context: get("Context"),
-      task: get("Task"),
-      output: get("Output"),
-      constraint: get("Constraint"),
-    };
-  }
+  const isRescoreDisabled = isScoring || isSameAsLastScore;
 
   return (
     <>
@@ -252,7 +210,8 @@ export default function Home() {
             <p>{error}</p>
             <button
               onClick={handleSubmit(onSubmit)}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded"
+              className="mt-3 px-4 py-2 rounded-md border border-red-300 bg-red-50 text-red-600 
+                hover:bg-red-100 transition-all duration-150 active:scale-[0.98]"
             >
               Retry
             </button>
@@ -274,13 +233,25 @@ export default function Home() {
         {/*<ResponseCard />*/}
 
         {result && (
-          <button
-            onClick={handleSubmit(onScore)}
-            disabled={isScoring}
-            className="mt-4 px-4 py-2 bg-black text-white rounded"
-          >
-            {scores ? "Re-score prompt" : "Score Prompt"}
-          </button>
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={handleSubmit(onScore)}
+              disabled={isRescoreDisabled}
+              className={`w-[90%] max-w-xl px-4 py-3 rounded-md 
+                border border-blue-300 
+                bg-blue-100 text-blue-800
+                transition-all duration-150 shadow-sm
+                font-semibold tracking-tight
+                [text-shadow:0_1px_0_rgba(255,255,255,0.6)]
+
+                ${isRescoreDisabled 
+                  ? "opacity-40 cursor-not-allowed pointer-events-none" 
+                  : "hover:bg-blue-200 hover:border-blue-400 active:scale-[0.98]"
+                }`}
+            >
+              {scores ? "Re-score prompt" : "Score Prompt"}
+            </button>
+          </div>
         )}
 
         {isScoring && <ResultSkeleton />}
@@ -312,7 +283,8 @@ export default function Home() {
             <p>{scoreError}</p>
             <button
               onClick={handleSubmit(onScore)}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded"
+              className="mt-3 px-4 py-2 rounded-md border border-red-300 bg-red-50 text-red-600 
+                hover:bg-red-100 transition-all duration-150 active:scale-[0.98]"
             >
               Retry
             </button>
@@ -333,18 +305,26 @@ export default function Home() {
                   {scores.suggestion.explanation}
                 </p>
 
-                <button
-                  onClick={() => {
-                    reset({
-                      ...watch(),
-                      [scores.suggestion!.field]: scores.suggestion!.improved,
-                    });
-                    alert("Prompt updated.");
-                  }}
-                  className="px-4 py-2 bg-black text-white rounded"
-                >
-                  Use This Prompt
-                </button>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => {
+                      reset({
+                        ...watch(),
+                        [scores.suggestion!.field]: scores.suggestion!.improved,
+                      });
+                      alert("Prompt updated.");
+                    }}
+                    className="w-[90%] max-w-xl mx-auto px-4 py-3 rounded-md 
+                      border border-blue-300 
+                      bg-blue-100 text-blue-800
+                      hover:bg-blue-200 hover:border-blue-400
+                      transition-all duration-150 active:scale-[0.98] shadow-sm
+                      font-semibold tracking-tight
+                      [text-shadow:0_1px_0_rgba(255,255,255,0.6)]"
+                  >
+                    Use This Prompt
+                  </button>
+                </div>
               </>
             ) : (
               <p className="text-gray-500 italic">
