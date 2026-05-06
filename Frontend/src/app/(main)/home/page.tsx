@@ -7,16 +7,20 @@ import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { shouldShowSuggestion } from "@/app/utils/scoringUtils";
 import { Button } from "@/components/ui/button";
+import { usePentagram } from "@/redux/hooks/usePentagram";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastScoredValues, setLastScoredValues] = useState<Record<FieldId, string> | null>(null);
+  const [lastScoredValues, setLastScoredValues] = useState<Record<
+    FieldId,
+    string
+  > | null>(null);
 
   const {
     control,
@@ -35,6 +39,8 @@ export default function Home() {
       constraint: "",
     },
   });
+
+  const { values, setFieldValue } = usePentagram();
 
   //scoring logic
   const [scores, setScores] = useState<{
@@ -65,16 +71,19 @@ export default function Home() {
 
   const formValues = watch();
 
+  //Check if the form is valid and Redux has values
+  const isReduxValid = Object.values(values).every((val) => val.trim() !== "");
+  const canSubmit = isValid && isReduxValid;
+
   // Needed to check whether prompt is the same or has been changed
   const isSameAsLastScore =
     !!lastScoredValues &&
     (Object.keys(lastScoredValues) as FieldId[]).every(
-      (key) =>
-        lastScoredValues[key] === formValues[key]
+      (key) => lastScoredValues[key] === formValues[key],
     );
 
-    //Sends prompt to api
-  async function onSubmit(data: Record<FieldId, string>) {
+  //Sends prompt to api
+  async function onSubmit() {
     setIsLoading(true);
     setResult(null);
     setError(null);
@@ -82,12 +91,13 @@ export default function Home() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 50000); // 50s timeout
 
+    //Use usePentagram values
     const prompt = `
-    Persona: ${data.persona}
-    Context: ${data.context}
-    Task: ${data.task}
-    Output: ${data.output}
-    Constraint: ${data.constraint}
+    Persona: ${values.persona}
+    Context: ${values.context}
+    Task: ${values.task}
+    Output: ${values.output}
+    Constraint: ${values.constraint}
   `;
 
     try {
@@ -226,9 +236,9 @@ export default function Home() {
         )}
 
         <SubmitButton
-          isValid={isValid}
+          isValid={canSubmit}
           handleSubmit={handleSubmit}
-          onSubmit={onSubmit}
+          onSubmit={() => onSubmit()}
           isLoading={isLoading}
         />
         {/*<ResponseCard />*/}
@@ -241,10 +251,10 @@ export default function Home() {
               onClick={handleSubmit(onScore)}
               disabled={isRescoreDisabled}
             >
-              {!scores 
-                ? "Score Prompt" 
-                : isSameAsLastScore 
-                  ? "Scored" 
+              {!scores
+                ? "Score Prompt"
+                : isSameAsLastScore
+                  ? "Scored"
                   : "Re-score prompt"}
             </Button>
           </div>
@@ -306,10 +316,16 @@ export default function Home() {
                     variant="secondary"
                     className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
                     onClick={() => {
+                      const improvedText = scores.suggestion!.improved;
+                      const targetField = scores.suggestion!.field;
+
                       reset({
                         ...watch(),
-                        [scores.suggestion!.field]: scores.suggestion!.improved,
+                        [targetField]: improvedText,
                       });
+
+                      setFieldValue(targetField, improvedText);
+
                       alert("Prompt updated.");
                     }}
                   >
