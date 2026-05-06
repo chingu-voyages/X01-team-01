@@ -9,6 +9,7 @@ import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { shouldShowSuggestion } from "@/app/utils/scoringUtils";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -234,23 +235,18 @@ export default function Home() {
 
         {result && (
           <div className="mt-4 flex justify-center">
-            <button
+            <Button
+              variant="secondary"
+              className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
               onClick={handleSubmit(onScore)}
               disabled={isRescoreDisabled}
-              className={`w-[90%] max-w-xl px-4 py-3 rounded-md 
-                border border-blue-300 
-                bg-blue-100 text-blue-800
-                transition-all duration-150 shadow-sm
-                font-semibold tracking-tight
-                [text-shadow:0_1px_0_rgba(255,255,255,0.6)]
-
-                ${isRescoreDisabled 
-                  ? "opacity-40 cursor-not-allowed pointer-events-none" 
-                  : "hover:bg-blue-200 hover:border-blue-400 active:scale-[0.98]"
-                }`}
             >
-              {scores ? "Re-score prompt" : "Score Prompt"}
-            </button>
+              {!scores 
+                ? "Score Prompt" 
+                : isSameAsLastScore 
+                  ? "Scored" 
+                  : "Re-score prompt"}
+            </Button>
           </div>
         )}
 
@@ -306,7 +302,9 @@ export default function Home() {
                 </p>
 
                 <div className="flex justify-center">
-                  <button
+                  <Button
+                    variant="secondary"
+                    className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
                     onClick={() => {
                       reset({
                         ...watch(),
@@ -314,16 +312,9 @@ export default function Home() {
                       });
                       alert("Prompt updated.");
                     }}
-                    className="w-[90%] max-w-xl mx-auto px-4 py-3 rounded-md 
-                      border border-blue-300 
-                      bg-blue-100 text-blue-800
-                      hover:bg-blue-200 hover:border-blue-400
-                      transition-all duration-150 active:scale-[0.98] shadow-sm
-                      font-semibold tracking-tight
-                      [text-shadow:0_1px_0_rgba(255,255,255,0.6)]"
                   >
                     Use This Prompt
-                  </button>
+                  </Button>
                 </div>
               </>
             ) : (
