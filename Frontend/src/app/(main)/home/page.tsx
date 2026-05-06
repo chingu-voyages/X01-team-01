@@ -7,16 +7,20 @@ import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { shouldShowSuggestion } from "@/app/utils/scoringUtils";
 import { Button } from "@/components/ui/button";
+import { usePentagram } from "@/redux/hooks/usePentagram";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastScoredValues, setLastScoredValues] = useState<Record<FieldId, string> | null>(null);
+  const [lastScoredValues, setLastScoredValues] = useState<Record<
+    FieldId,
+    string
+  > | null>(null);
 
   const {
     control,
@@ -35,6 +39,8 @@ export default function Home() {
       constraint: "",
     },
   });
+
+  const { values } = usePentagram();
 
   //scoring logic
   const [scores, setScores] = useState<{
@@ -65,15 +71,18 @@ export default function Home() {
 
   const formValues = watch();
 
+  //Check if the form is valid and Redux has values
+  const isReduxValid = Object.values(values).every((val) => val.trim() !== "");
+  const canSubmit = isValid && isReduxValid;
+
   // Needed to check whether prompt is the same or has been changed
   const isSameAsLastScore =
     !!lastScoredValues &&
     (Object.keys(lastScoredValues) as FieldId[]).every(
-      (key) =>
-        lastScoredValues[key] === formValues[key]
+      (key) => lastScoredValues[key] === formValues[key],
     );
 
-    //Sends prompt to api
+  //Sends prompt to api
   async function onSubmit(data: Record<FieldId, string>) {
     setIsLoading(true);
     setResult(null);
@@ -226,7 +235,7 @@ export default function Home() {
         )}
 
         <SubmitButton
-          isValid={isValid}
+          isValid={canSubmit}
           handleSubmit={handleSubmit}
           onSubmit={onSubmit}
           isLoading={isLoading}
@@ -241,10 +250,10 @@ export default function Home() {
               onClick={handleSubmit(onScore)}
               disabled={isRescoreDisabled}
             >
-              {!scores 
-                ? "Score Prompt" 
-                : isSameAsLastScore 
-                  ? "Scored" 
+              {!scores
+                ? "Score Prompt"
+                : isSameAsLastScore
+                  ? "Scored"
                   : "Re-score prompt"}
             </Button>
           </div>
