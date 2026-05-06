@@ -83,7 +83,7 @@ export default function Home() {
     );
 
   //Sends prompt to api
-  async function onSubmit(data: Record<FieldId, string>) {
+  async function onSubmit() {
     setIsLoading(true);
     setResult(null);
     setError(null);
@@ -91,12 +91,13 @@ export default function Home() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 50000); // 50s timeout
 
+    //Use usePentagram values
     const prompt = `
-    Persona: ${data.persona}
-    Context: ${data.context}
-    Task: ${data.task}
-    Output: ${data.output}
-    Constraint: ${data.constraint}
+    Persona: ${values.persona}
+    Context: ${values.context}
+    Task: ${values.task}
+    Output: ${values.output}
+    Constraint: ${values.constraint}
   `;
 
     try {
@@ -237,7 +238,7 @@ export default function Home() {
         <SubmitButton
           isValid={canSubmit}
           handleSubmit={handleSubmit}
-          onSubmit={onSubmit}
+          onSubmit={() => onSubmit()}
           isLoading={isLoading}
         />
         {/*<ResponseCard />*/}
