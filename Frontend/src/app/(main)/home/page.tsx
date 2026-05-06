@@ -40,7 +40,7 @@ export default function Home() {
     },
   });
 
-  const { values } = usePentagram();
+  const { values, setFieldValue } = usePentagram();
 
   //scoring logic
   const [scores, setScores] = useState<{
@@ -316,10 +316,16 @@ export default function Home() {
                     variant="secondary"
                     className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
                     onClick={() => {
+                      const improvedText = scores.suggestion!.improved;
+                      const targetField = scores.suggestion!.field;
+
                       reset({
                         ...watch(),
-                        [scores.suggestion!.field]: scores.suggestion!.improved,
+                        [targetField]: improvedText,
                       });
+
+                      setFieldValue(targetField, improvedText);
+
                       alert("Prompt updated.");
                     }}
                   >
