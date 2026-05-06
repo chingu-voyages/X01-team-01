@@ -14,6 +14,7 @@ import { Textarea } from "./ui/textarea";
 import { useState } from "react";
 import { HelpMessage } from "./HelpMessage";
 import HelpButton from "./HelpButton";
+import { usePentagram } from "@/redux/hooks/usePentagram";
 
 type FormValues = Record<FieldId, string>;
 
@@ -29,6 +30,8 @@ export default function FormSection({
   watch,
 }: FormSectionProps) {
   const [openHelpId, setOpenHelpId] = useState<FieldId | null>(null);
+
+  const { values, setFieldValue } = usePentagram();
 
   return (
     <form className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-3 gap-4">
@@ -53,8 +56,8 @@ export default function FormSection({
                 />
               </div>
               <Button
-                onClick={() => resetField(field.id)}
-                disabled={watch(field.id) === ""}
+                onClick={() => setFieldValue(field.id, "")}
+                disabled={values[field.id] === ""}
                 variant="ghost"
                 className="hover:bg-transparent"
               >
@@ -71,6 +74,11 @@ export default function FormSection({
                 <>
                   <Textarea
                     {...f}
+                    value={values[field.id]}
+                    onChange={(e) => {
+                      f.onChange(e);
+                      setFieldValue(field.id, e.target.value);
+                    }}
                     id={field.id}
                     placeholder={field.placeholder}
                     className="resize-none h-28"
