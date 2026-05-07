@@ -11,6 +11,7 @@ import { useState } from "react";
 import { shouldShowSuggestion } from "@/app/utils/scoringUtils";
 import { Button } from "@/components/ui/button";
 import { usePentagram } from "@/redux/hooks/usePentagram";
+import ComparisonModal from "@/components/ComparisonModal";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -339,6 +340,13 @@ export default function Home() {
               </p>
             )}
           </div>
+        )}
+        {scores?.suggestion && (
+          <ComparisonModal
+            isModalOpen={true}
+            onClose={() => {}}
+            suggestion={scores?.suggestion}
+          />
         )}
       </section>
     </>
