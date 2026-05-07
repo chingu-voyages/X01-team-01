@@ -1,4 +1,4 @@
-interface ScoringResponse {
+export interface ScoringResponse {
   global_scores: {
     clarity: number;
     specificity: number;
