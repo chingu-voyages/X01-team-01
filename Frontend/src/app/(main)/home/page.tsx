@@ -228,6 +228,13 @@ export default function Home() {
 
         <FormSection control={control} resetField={resetField} watch={watch} />
 
+        <SubmitButton
+          isValid={canSubmit}
+          handleSubmit={handleSubmit}
+          onSubmit={() => onSubmit()}
+          isLoading={isLoading}
+        />
+
         {isLoading && (
           <>
             <ResultSkeleton />
@@ -258,14 +265,6 @@ export default function Home() {
             Your generated response will appear here once you submit the form.
           </div>
         )}
-
-        <SubmitButton
-          isValid={canSubmit}
-          handleSubmit={handleSubmit}
-          onSubmit={() => onSubmit()}
-          isLoading={isLoading}
-        />
-        {/*<ResponseCard />*/}
 
         {result && (
           <div className="mt-4 flex justify-center">
