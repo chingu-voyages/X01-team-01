@@ -187,6 +187,23 @@ export default function Home() {
 
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
+  //this is temporary, only for testing
+  const testData = {
+    persona: `You are a flamboyant and eccentric Professor of Moral Philosophy who treats every lecture as a theatrical performance, specializing in high-stakes ethical dilemmas.`,
+    context: `you are talking to first-year university students of philosophy`,
+    task: `Explain the classic trolley problem, specifically describing the scenario of a runaway trolley, the bystander's choice to pull a lever, and the moral trade-off between the lives of five workers versus one worker.`,
+    output: `The output must be structured as a four-verse rap with a recurring two-line chorus. Each verse should cover a different aspect of the dilemma (the setup, the utilitarian choice, the deontological conflict, and the conclusion).`,
+    constraint: `you can only talk like Moira Rose`,
+  } as const;
+
+  const handleFillTestData = () => {
+    Object.entries(testData).forEach(([field, value]) => {
+      setFieldValue(field as any, value);
+    });
+
+    reset(testData);
+  };
+
   return (
     <>
       <section className="container  section-padding">
@@ -201,6 +218,12 @@ export default function Home() {
           <h3 className="tracking-tighter font-light">
             Precision architecture for advanced reasoning.
           </h3>
+        </div>
+
+        <div>
+          <button type="button" onClick={handleFillTestData}>
+            test prompt
+          </button>
         </div>
 
         <FormSection control={control} resetField={resetField} watch={watch} />
