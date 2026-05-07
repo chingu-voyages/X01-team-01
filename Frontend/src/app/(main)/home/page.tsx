@@ -217,6 +217,8 @@ export default function Home() {
     reset(testData);
   };
 
+  const handleTestSuggestion = () => setIsModalOpen(true)
+
   return (
     <>
       <section className="container  section-padding">
@@ -233,9 +235,13 @@ export default function Home() {
           </h3>
         </div>
 
-        <div>
+        {/* only for testing */}
+        <div className="flex gap-4">
           <button type="button" onClick={handleFillTestData}>
             test prompt
+          </button>
+          <button type="button" onClick={handleTestSuggestion}>
+            test suggestion
           </button>
         </div>
 
@@ -370,7 +376,7 @@ export default function Home() {
         {isModalOpen && (
           <ComparisonModal
             isModalOpen={true}
-            onClose={() => {}}
+            onClose={() => {setIsModalOpen(false)}}
             suggestion={mockSuggestion}
           />
         )}
