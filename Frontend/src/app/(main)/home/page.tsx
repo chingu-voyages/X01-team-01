@@ -8,7 +8,10 @@ import ReactMarkdown from "react-markdown";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import { shouldShowSuggestion } from "@/app/utils/scoringUtils";
+import {
+  ScoringResponse,
+  shouldShowSuggestion,
+} from "@/app/utils/scoringUtils";
 import { Button } from "@/components/ui/button";
 import { usePentagram } from "@/redux/hooks/usePentagram";
 import ComparisonModal from "@/components/ComparisonModal";
@@ -188,6 +191,15 @@ export default function Home() {
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
   //this is temporary, only for testing
+  const mockSuggestion: NonNullable<ScoringResponse["suggestion"]> = {
+    field: "persona",
+    original: "I am a writer.",
+    improved:
+      "You are an expert technical copywriter with 10 years of experience in SaaS.",
+    explanation:
+      "Adding a specific persona and seniority level improves tone consistency.",
+  };
+
   const testData = {
     persona: `You are a flamboyant and eccentric Professor of Moral Philosophy who treats every lecture as a theatrical performance, specializing in high-stakes ethical dilemmas.`,
     context: `you are talking to first-year university students of philosophy`,
@@ -363,13 +375,11 @@ export default function Home() {
             )}
           </div>
         )}
-        {scores?.suggestion && (
-          <ComparisonModal
-            isModalOpen={true}
-            onClose={() => {}}
-            suggestion={scores?.suggestion}
-          />
-        )}
+        <ComparisonModal
+          isModalOpen={true}
+          onClose={() => {}}
+          suggestion={mockSuggestion}
+        />
       </section>
     </>
   );
