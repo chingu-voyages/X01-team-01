@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { usePentagram } from "@/redux/hooks/usePentagram";
 import ComparisonModal from "@/components/ComparisonModal";
+import { toast } from "sonner";
+import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -192,7 +194,8 @@ export default function Home() {
 
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
-  function handleApplySuggestion(field: string, newValue: string) {
+  function handleApplySuggestion(field: FieldId, newValue: string) {
+    //UI and state update
     setValue(field as any, newValue, {
       shouldDirty: true,
       shouldValidate: true,
@@ -200,7 +203,20 @@ export default function Home() {
 
     setFieldValue(field as FieldId, newValue);
 
+    //close modal
     setIsModalOpen(false);
+
+    //fire toast component
+    toast.custom((t) => (
+      <ApplySuggestionToast
+        t={t}
+        field={field}
+        onUndo={() => console.log("Undo logic is coming")}
+      />
+    ), {
+      duration: 6000,
+      position: "bottom-right"
+    })
   }
 
   //this is temporary, only for testing

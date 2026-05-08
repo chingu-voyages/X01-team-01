@@ -1,3 +1,4 @@
+import { FieldId } from "@/const/fields";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,7 @@ interface ComparisonModalProps {
   isModalOpen: boolean;
   onClose: () => void;
   suggestion: ScoringResponse["suggestion"];
-  onApply: (field: string, value: string) => void;
+  onApply: (field: FieldId, value: string) => void;
 }
 
 export default function ComparisonModal({
