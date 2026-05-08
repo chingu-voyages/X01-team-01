@@ -13,7 +13,7 @@ export default function ApplySuggestionToast({
   onUndo,
 }: ApplySuggestionToastProps) {
   return (
-    <div className="flex w-95 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
+    <div className="relative overflow-hidden flex w-95 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
       <div>
         <h3 className="text-lg font-semibold text-slate-900">Prompt updated</h3>
         <p className="mt-1 text-sm text-slate-500 leading-relaxed">
@@ -40,6 +40,7 @@ export default function ApplySuggestionToast({
           Undo
         </button>
       </div>
+      <div className="absolute bottom-0 left-0 h-1 bg-gray-600 animate-shrink rounded-b-xl" />
     </div>
   );
 }
