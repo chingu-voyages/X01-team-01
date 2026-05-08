@@ -26,11 +26,14 @@ export default function Home() {
     string
   > | null>(null);
 
+  const { values, setFieldValue } = usePentagram();
+
   const {
     control,
     handleSubmit,
     reset,
     resetField,
+    setValue,
     watch,
     formState: { isValid },
   } = useForm({
@@ -43,8 +46,6 @@ export default function Home() {
       constraint: "",
     },
   });
-
-  const { values, setFieldValue } = usePentagram();
 
   //scoring logic
   const [scores, setScores] = useState<{
@@ -191,6 +192,17 @@ export default function Home() {
 
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
+  function handleApplySuggestion(field: string, newValue: string) {
+    setValue(field as any, newValue, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    setFieldValue(field as FieldId, newValue);
+
+    setIsModalOpen(false);
+  }
+
   //this is temporary, only for testing
   const mockSuggestion: NonNullable<ScoringResponse["suggestion"]> = {
     field: "persona",
@@ -217,7 +229,7 @@ export default function Home() {
     reset(testData);
   };
 
-  const handleTestSuggestion = () => setIsModalOpen(true)
+  const handleTestSuggestion = () => setIsModalOpen(true);
 
   return (
     <>
@@ -376,8 +388,11 @@ export default function Home() {
         {isModalOpen && (
           <ComparisonModal
             isModalOpen={true}
-            onClose={() => {setIsModalOpen(false)}}
+            onClose={() => {
+              setIsModalOpen(false);
+            }}
             suggestion={mockSuggestion}
+            onApply={handleApplySuggestion}
           />
         )}
       </section>
