@@ -32,29 +32,29 @@ export default function ComparisonModal({
       <Dialog open={isModalOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-[90vw] md:max-w-3xl flex flex-col max-h-[90vh]">
           <DialogHeader className="p-2 pb-2">
-            <DialogTitle className="text-2xl font-medium mb-4 uppercase italic text-slate-700">
+            <DialogTitle className="text-lg md:text-2xl text-center md:text-left font-medium mb-4 uppercase italic text-slate-700">
               Review suggested change - {suggestion?.field}
             </DialogTitle>
-            <DialogDescription className="text-lg">
+            <DialogDescription className="text-base leading-snug text-center md:text-lg md:text-left">
               {suggestion?.explanation}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="flex flex-col space-y-2">
                 <h3 className="text-sm lg:text-base font-semibold uppercase text-slate-700">
                   Your original text
                 </h3>
-                <div className="p-4 rounded-md border bg-muted/50 min-h-40 text-sm lg:text-base">
+                <div className="h-full p-4 rounded-md border bg-muted/50 text-sm lg:text-base">
                   {suggestion?.original}
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col space-y-2">
                 <h3 className="text-sm lg:text-base font-semibold uppercase text-slate-700">
                   Suggestion
                 </h3>
-                <div className="p-4 rounded-md border bg-muted/50 min-h-40 text-sm lg:text-base">
+                <div className="h-full p-4 rounded-md border bg-muted/50 text-sm lg:text-base">
                   {suggestion?.improved}
                 </div>
               </div>
