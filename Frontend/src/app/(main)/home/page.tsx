@@ -144,6 +144,46 @@ export default function Home() {
     setScores(null);
     setScoreError(null);
 
+    // --- DEMO MODE --- for sprint demo in case API is down
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+
+    if (isDemo) {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      const mockResult: ScoringResponse = {
+        overall: 7,
+        global_scores: {
+          clarity: 8,
+          specificity: 6,
+          format_guidance: 9,
+        },
+        field_grades: {
+          persona: 9,
+          context: 8,
+          task: 5, // Lower score to highlight the suggestion
+          output: 8,
+          constraint: 7,
+        },
+        weakest_field: "task",
+        suggestion: {
+          field: "task",
+          original: formData.task || "Write a blog post about coffee.",
+          improved:
+            "Draft a 500-word educational blog post for home baristas focusing on the scientific benefits of manual pour-over brewing versus automatic drip machines.",
+          explanation:
+            "The current task is a bit vague. Specifying the target audience and the exact goal helps the AI generate more relevant content.",
+        },
+      };
+
+      setScores(mockResult);
+      setLastScoredValues({ ...formData });
+      setIsScoring(false);
+      return;
+    }
+
+    // --- END DEMO MODE ---
+
     try {
       const res = await fetch("/api/score", {
         method: "POST",
@@ -217,13 +257,7 @@ export default function Home() {
 
     //fire toast component
     toast.custom(
-      (t) => (
-        <ApplySuggestionToast
-          t={t}
-          field={field}
-          onUndo={handleUndo}
-        />
-      ),
+      (t) => <ApplySuggestionToast t={t} field={field} onUndo={handleUndo} />,
       {
         duration: 6000,
         position: "bottom-right",
@@ -232,15 +266,6 @@ export default function Home() {
   }
 
   //this is temporary, only for testing
-  const mockSuggestion: NonNullable<ScoringResponse["suggestion"]> = {
-    field: "persona",
-    original: "I am a writer.",
-    improved:
-      "You are an expert technical copywriter with 10 years of experience in SaaS.",
-    explanation:
-      "Adding a specific persona and seniority level improves tone consistency.",
-  };
-
   const testData = {
     persona: `You are a flamboyant and eccentric Professor of Moral Philosophy who treats every lecture as a theatrical performance, specializing in high-stakes ethical dilemmas.`,
     context: `you are talking to first-year university students of philosophy`,
@@ -256,8 +281,6 @@ export default function Home() {
 
     reset(testData);
   };
-
-  const handleTestSuggestion = () => setIsModalOpen(true);
 
   return (
     <>
@@ -279,9 +302,6 @@ export default function Home() {
         <div className="flex gap-4">
           <button type="button" onClick={handleFillTestData}>
             test prompt
-          </button>
-          <button type="button" onClick={handleTestSuggestion}>
-            test suggestion
           </button>
         </div>
 
@@ -419,7 +439,7 @@ export default function Home() {
             onClose={() => {
               setIsModalOpen(false);
             }}
-            suggestion={mockSuggestion}
+            suggestion={scores?.suggestion || null}
             onApply={handleApplySuggestion}
           />
         )}
