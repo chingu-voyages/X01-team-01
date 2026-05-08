@@ -195,28 +195,40 @@ export default function Home() {
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
   function handleApplySuggestion(field: FieldId, newValue: string) {
+    //capture 'original' value before changing it
+    const oldValue = values[field];
+
     //UI and state update
     setValue(field as any, newValue, {
       shouldDirty: true,
       shouldValidate: true,
     });
-
     setFieldValue(field as FieldId, newValue);
+
+    //undo function
+    function handleUndo() {
+      //revert Hook Form and Redux to old value
+      setValue(field as any, oldValue, { shouldDirty: true });
+      setFieldValue(field, oldValue);
+    }
 
     //close modal
     setIsModalOpen(false);
 
     //fire toast component
-    toast.custom((t) => (
-      <ApplySuggestionToast
-        t={t}
-        field={field}
-        onUndo={() => console.log("Undo logic is coming")}
-      />
-    ), {
-      duration: 6000,
-      position: "bottom-right"
-    })
+    toast.custom(
+      (t) => (
+        <ApplySuggestionToast
+          t={t}
+          field={field}
+          onUndo={handleUndo}
+        />
+      ),
+      {
+        duration: 6000,
+        position: "bottom-right",
+      },
+    );
   }
 
   //this is temporary, only for testing
