@@ -46,7 +46,7 @@ export default function ComparisonModal({
                 <h3 className="text-sm lg:text-base font-semibold uppercase text-slate-700">
                   Your original text
                 </h3>
-                <div className="p-4 rounded-md border bg-muted/50 min-h-32 text-sm lg:text-base">
+                <div className="p-4 rounded-md border bg-muted/50 min-h-40 text-sm lg:text-base">
                   {suggestion?.original}
                 </div>
               </div>
@@ -54,7 +54,7 @@ export default function ComparisonModal({
                 <h3 className="text-sm lg:text-base font-semibold uppercase text-slate-700">
                   Suggestion
                 </h3>
-                <div className="p-4 rounded-md border bg-muted/50 min-h-32 text-sm lg:text-base">
+                <div className="p-4 rounded-md border bg-muted/50 min-h-40 text-sm lg:text-base">
                   {suggestion?.improved}
                 </div>
               </div>

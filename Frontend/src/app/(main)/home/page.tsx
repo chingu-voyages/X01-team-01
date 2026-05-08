@@ -96,6 +96,22 @@ export default function Home() {
     setResult(null);
     setError(null);
 
+    // --- DEMO MODE ---
+
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+    if (isDemo) {
+      const manualPrompt = `Persona: ${values.persona}
+    Context: ${values.context}
+    Task: ${values.task}
+    Output: ${values.output}
+    Constraint: ${values.constraint}`;
+
+      setResult(manualPrompt);
+
+      setIsLoading(false);
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 50000); // 50s timeout
 
@@ -149,7 +165,7 @@ export default function Home() {
       new URLSearchParams(window.location.search).get("demo") === "true";
 
     if (isDemo) {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const mockResult: ScoringResponse = {
         overall: 7,
