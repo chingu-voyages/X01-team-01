@@ -8,9 +8,15 @@ import ReactMarkdown from "react-markdown";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import { shouldShowSuggestion } from "@/app/utils/scoringUtils";
+import {
+  ScoringResponse,
+  shouldShowSuggestion,
+} from "@/app/utils/scoringUtils";
 import { Button } from "@/components/ui/button";
 import { usePentagram } from "@/redux/hooks/usePentagram";
+import ComparisonModal from "@/components/ComparisonModal";
+import { toast } from "sonner";
+import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -22,11 +28,14 @@ export default function Home() {
     string
   > | null>(null);
 
+  const { values, setFieldValue } = usePentagram();
+
   const {
     control,
     handleSubmit,
     reset,
     resetField,
+    setValue,
     watch,
     formState: { isValid },
   } = useForm({
@@ -39,8 +48,6 @@ export default function Home() {
       constraint: "",
     },
   });
-
-  const { values, setFieldValue } = usePentagram();
 
   //scoring logic
   const [scores, setScores] = useState<{
@@ -68,6 +75,7 @@ export default function Home() {
 
   const [isScoring, setIsScoring] = useState(false);
   const [scoreError, setScoreError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const formValues = watch();
 
@@ -87,6 +95,22 @@ export default function Home() {
     setIsLoading(true);
     setResult(null);
     setError(null);
+
+    // --- DEMO MODE ---
+
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+    if (isDemo) {
+      const manualPrompt = `Persona: ${values.persona}
+    Context: ${values.context}
+    Task: ${values.task}
+    Output: ${values.output}
+    Constraint: ${values.constraint}`;
+
+      setResult(manualPrompt);
+
+      setIsLoading(false);
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 50000); // 50s timeout
@@ -135,6 +159,46 @@ export default function Home() {
     setIsScoring(true);
     setScores(null);
     setScoreError(null);
+
+    // --- DEMO MODE --- for sprint demo in case API is down
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+
+    if (isDemo) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const mockResult: ScoringResponse = {
+        overall: 7,
+        global_scores: {
+          clarity: 8,
+          specificity: 6,
+          format_guidance: 9,
+        },
+        field_grades: {
+          persona: 9,
+          context: 8,
+          task: 5, // Lower score to highlight the suggestion
+          output: 8,
+          constraint: 7,
+        },
+        weakest_field: "task",
+        suggestion: {
+          field: "task",
+          original: formData.task || "Write a blog post about coffee.",
+          improved:
+            "Draft a 500-word educational blog post for home baristas focusing on the scientific benefits of manual pour-over brewing versus automatic drip machines.",
+          explanation:
+            "The current task is a bit vague. Specifying the target audience and the exact goal helps the AI generate more relevant content.",
+        },
+      };
+
+      setScores(mockResult);
+      setLastScoredValues({ ...formData });
+      setIsScoring(false);
+      return;
+    }
+
+    // --- END DEMO MODE ---
 
     try {
       const res = await fetch("/api/score", {
@@ -186,6 +250,54 @@ export default function Home() {
 
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
+  function handleApplySuggestion(field: FieldId, newValue: string) {
+    //capture 'original' value before changing it
+    const oldValue = values[field];
+
+    //UI and state update
+    setValue(field as any, newValue, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setFieldValue(field as FieldId, newValue);
+
+    //undo function
+    function handleUndo() {
+      //revert Hook Form and Redux to old value
+      setValue(field as any, oldValue, { shouldDirty: true });
+      setFieldValue(field, oldValue);
+    }
+
+    //close modal
+    setIsModalOpen(false);
+
+    //fire toast component
+    toast.custom(
+      (t) => <ApplySuggestionToast t={t} field={field} onUndo={handleUndo} />,
+      {
+        duration: 6000,
+        position: "bottom-right",
+      },
+    );
+  }
+
+  //this is temporary, only for testing
+  const testData = {
+    persona: `You are a flamboyant and eccentric Professor of Moral Philosophy who treats every lecture as a theatrical performance, specializing in high-stakes ethical dilemmas.`,
+    context: `you are talking to first-year university students of philosophy`,
+    task: `Explain the classic trolley problem, specifically describing the scenario of a runaway trolley, the bystander's choice to pull a lever, and the moral trade-off between the lives of five workers versus one worker.`,
+    output: `The output must be structured as a four-verse rap with a recurring two-line chorus. Each verse should cover a different aspect of the dilemma (the setup, the utilitarian choice, the deontological conflict, and the conclusion).`,
+    constraint: `you can only talk like Moira Rose`,
+  } as const;
+
+  const handleFillTestData = () => {
+    Object.entries(testData).forEach(([field, value]) => {
+      setFieldValue(field as any, value);
+    });
+
+    reset(testData);
+  };
+
   return (
     <>
       <section className="container  section-padding">
@@ -202,7 +314,21 @@ export default function Home() {
           </h3>
         </div>
 
+        {/* only for testing */}
+        <div className="flex gap-4">
+          <button type="button" onClick={handleFillTestData}>
+            test prompt
+          </button>
+        </div>
+
         <FormSection control={control} resetField={resetField} watch={watch} />
+
+        <SubmitButton
+          isValid={canSubmit}
+          handleSubmit={handleSubmit}
+          onSubmit={() => onSubmit()}
+          isLoading={isLoading}
+        />
 
         {isLoading && (
           <>
@@ -234,14 +360,6 @@ export default function Home() {
             Your generated response will appear here once you submit the form.
           </div>
         )}
-
-        <SubmitButton
-          isValid={canSubmit}
-          handleSubmit={handleSubmit}
-          onSubmit={() => onSubmit()}
-          isLoading={isLoading}
-        />
-        {/*<ResponseCard />*/}
 
         {result && (
           <div className="mt-4 flex justify-center">
@@ -316,20 +434,10 @@ export default function Home() {
                     variant="secondary"
                     className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
                     onClick={() => {
-                      const improvedText = scores.suggestion!.improved;
-                      const targetField = scores.suggestion!.field;
-
-                      reset({
-                        ...watch(),
-                        [targetField]: improvedText,
-                      });
-
-                      setFieldValue(targetField, improvedText);
-
-                      alert("Prompt updated.");
+                      setIsModalOpen(true);
                     }}
                   >
-                    Use This Prompt
+                    Review Suggestion
                   </Button>
                 </div>
               </>
@@ -339,6 +447,17 @@ export default function Home() {
               </p>
             )}
           </div>
+        )}
+
+        {isModalOpen && (
+          <ComparisonModal
+            isModalOpen={true}
+            onClose={() => {
+              setIsModalOpen(false);
+            }}
+            suggestion={scores?.suggestion || null}
+            onApply={handleApplySuggestion}
+          />
         )}
       </section>
     </>

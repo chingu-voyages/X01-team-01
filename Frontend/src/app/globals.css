@@ -48,6 +48,16 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   --shadow-soft: var(--shadow-soft);
   --shadow-light: var(--shadow-light);
+  --animate-shrink: shrink 6s linear forwards;
+
+  @keyframes shrink {
+    from {
+      width: 100%
+    }
+    to {
+      width: 0%
+    }
+  }
 }
 
 :root {
