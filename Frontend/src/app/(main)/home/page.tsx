@@ -101,11 +101,33 @@ export default function Home() {
       (key) => lastScoredValues[key] === formValues[key],
     );
 
+    //watchesfor any changes in the 5 promptfields so that it can reset any active panels
+    const watchedPersona = watch("persona");
+    const watchedContext = watch("context");
+    const watchedTask = watch("task");
+    const watchedOutput = watch("output");
+    const watchedConstraint = watch("constraint");
+
+    useEffect(() => {
+      if (!result && !scores && !evaluation) return;
+
+      resetAnalysisPanels();
+      
+    }, [
+      watchedPersona,
+      watchedContext,
+      watchedTask,
+      watchedOutput,
+      watchedConstraint,
+    ]);
+
   //Sends prompt to api
   async function onSubmit() {
     setIsLoading(true);
     setResult(null);
     setError(null);
+
+    resetAnalysisPanels(); // resets panels (score and evaluation panels etc..)
 
     // --- DEMO MODE ---
 
@@ -359,7 +381,7 @@ export default function Home() {
     constraint: `you can only talk like Moira Rose`,
   } as const;
 
-  ///////////////////////////////////////////////////////////////////////////////
+ // more temporary stuff ///////////////////////////////////////////////////////////////////////////////
   const mockEvaluationResponse = `
     Authentication works by verifying a user's identity.
 
@@ -378,6 +400,15 @@ export default function Home() {
 
     reset(testData);
   };
+
+  //Helper function to delete panels on resubmitting a prompt or changing one of the 5 prompts
+  function resetAnalysisPanels() {
+  setScores(null);
+  setEvaluation(null);
+  setEvaluationError(null);
+  setScoreError(null);
+  setLastScoredValues(null);
+}
 
   return (
     <>
