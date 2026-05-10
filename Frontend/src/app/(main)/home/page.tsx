@@ -1,13 +1,15 @@
 "use client";
 import FormSection from "@/components/FormSection";
 import ResultSkeleton from "@/components/ResultSkeleton";
+import EvaluationSkeleton from "@/components/EvaluationSkeleton";
+import EvaluationPanel from "@/components/EvaluationPanel";
 // import ResponseCard from "@/components/ResponseCard";
 import SubmitButton from "@/components/SubmitButton";
 import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ScoringResponse,
   shouldShowSuggestion,
@@ -79,9 +81,18 @@ export default function Home() {
 
   const formValues = watch();
 
+  const [evaluation, setEvaluation] = useState(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
+
   //Check if the form is valid and Redux has values
   const isReduxValid = Object.values(values).every((val) => val.trim() !== "");
   const canSubmit = isValid && isReduxValid;
+
+  //Needed for redux rehydration so EvaluationButton doesnt think prompt fields are empty when they arn'tw
+      useEffect(() => {
+      reset(values);
+    }, [values, reset]);
 
   // Needed to check whether prompt is the same or has been changed
   const isSameAsLastScore =
@@ -250,6 +261,64 @@ export default function Home() {
 
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
+  async function onEvaluate(formData: Record<FieldId, string>) {
+  // Guard against missing Gemini response
+  if (!result) return;
+
+  setIsEvaluating(true);
+  setEvaluation(null);
+  setEvaluationError(null);
+
+  try {
+    const res = await fetch("/api/evaluate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        persona: formData.persona,
+        context: formData.context,
+        task: formData.task,
+        output: formData.output,
+        constraint: formData.constraint,
+        response: result
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Request failed: ${res.status} - ${text}`);
+    }
+
+    const resultData = await res.json();
+
+    console.log("EVALUATE RESPONSE:", resultData);
+
+    setEvaluation(resultData);
+  } catch (err) {
+    console.error("Evaluation error:", err);
+
+    setEvaluationError(
+      "Evaluation unavailable. Please try again."
+    );
+  } finally {
+    setIsEvaluating(false);
+  }
+  }
+
+  function handleUseFollowUp(followUp: string) {
+    reset({
+      ...watch(),
+      task: followUp,
+    });
+
+    setFieldValue("task", followUp);
+
+    // optional UX feedback (matches your existing pattern)
+    alert("Task field updated with follow-up.");
+  }
+
+
   function handleApplySuggestion(field: FieldId, newValue: string) {
     //capture 'original' value before changing it
     const oldValue = values[field];
@@ -290,6 +359,18 @@ export default function Home() {
     constraint: `you can only talk like Moira Rose`,
   } as const;
 
+  ///////////////////////////////////////////////////////////////////////////////
+  const mockEvaluationResponse = `
+    Authentication works by verifying a user's identity.
+
+    Users log in with a username and password.
+    The server checks credentials against a database.
+    If valid, the user gains access.
+
+    JWT tokens can also be used for session management.
+    `;
+//////////////////////////////////////////////////////////////////////////////////
+
   const handleFillTestData = () => {
     Object.entries(testData).forEach(([field, value]) => {
       setFieldValue(field as any, value);
@@ -320,6 +401,22 @@ export default function Home() {
             test prompt
           </button>
         </div>
+
+ {/* only for testing */}
+        <button
+          type="button"
+          onClick={() => {
+            handleFillTestData();
+
+            setResult(mockEvaluationResponse);
+
+            setScores(null);
+            setEvaluation(null);
+          }}
+        >
+          test evaluate
+        </button>
+         {/* only for testing */}
 
         <FormSection control={control} resetField={resetField} watch={watch} />
 
@@ -380,7 +477,7 @@ export default function Home() {
 
         {isScoring && <ResultSkeleton />}
 
-        {scores && !isScoring && shouldShowSuggestion(scores) && (
+        {scores && !isScoring && (
           <div className="mt-6 p-4 border rounded bg-white">
             <p className={getColor(scores.global_scores.clarity)}>
               Clarity: {scores.global_scores.clarity}/10
@@ -415,7 +512,7 @@ export default function Home() {
           </div>
         )}
 
-        {scores && !isScoring && (
+        {scores && (
           <div className="mt-6 p-4 border rounded bg-gray-50">
             <h3 className="font-semibold mb-2">Suggested improvement</h3>
 
@@ -432,10 +529,8 @@ export default function Home() {
                 <div className="flex justify-center">
                   <Button
                     variant="secondary"
-                    className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
-                    onClick={() => {
-                      setIsModalOpen(true);
-                    }}
+                    className="w-full md:w-full h-12 text-base font-bold"
+                    onClick={() => setIsModalOpen(true)}
                   >
                     Review Suggestion
                   </Button>
@@ -448,6 +543,27 @@ export default function Home() {
             )}
           </div>
         )}
+
+        {result && (
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    variant="secondary"
+                    className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+                    onClick={handleSubmit(onEvaluate)}
+                    disabled={isEvaluating}
+                  >
+                    {isEvaluating ? "Evaluating..." : "Evaluate response"}
+                  </Button>
+                </div>
+              )}
+
+              <EvaluationPanel
+                evaluation={evaluation}
+                isEvaluating={isEvaluating}
+                error={evaluationError}
+                onRetry={handleSubmit(onEvaluate)}
+                onUseFollowUp={handleUseFollowUp}
+              />
 
         {isModalOpen && (
           <ComparisonModal
