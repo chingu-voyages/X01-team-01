@@ -15,6 +15,17 @@ export default function ScoreTrendCard({ sessions }: ScoreTrendCardProps) {
     return null;
   }
 
+  const latestScore = sessions[sessions.length - 1].score;
+
+  //line colors depending on the latestScore
+  let lineColor = "#ef4444"; //Default Red
+
+  if (latestScore >= 8) {
+    lineColor = "#22c55e"; //Green
+  } else if (latestScore >= 5) {
+    lineColor = "#f59e0b"; //Amber
+  }
+
   return (
     <>
       <div className="bg-gray-200 p-4 rounded-lg">
