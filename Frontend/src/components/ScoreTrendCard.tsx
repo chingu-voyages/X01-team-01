@@ -19,7 +19,7 @@ export default function ScoreTrendCard({ sessions }: ScoreTrendCardProps) {
 
   const latestScore = sessions[sessions.length - 1].score;
 
-  const scoreValues = sessions.map((s) => s.score);
+  const scoreValues = sessions.slice(-10).map((s) => s.score);
 
   //line colors depending on the latestScore
   let lineColor = "#ef4444"; //Default Red
