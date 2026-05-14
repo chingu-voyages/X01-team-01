@@ -1,3 +1,5 @@
+import { Sparklines, SparklinesLine, SparklinesSpots } from "react-sparklines";
+
 //interface for the data point
 interface ScoreData {
   score: number;
@@ -16,6 +18,8 @@ export default function ScoreTrendCard({ sessions }: ScoreTrendCardProps) {
   }
 
   const latestScore = sessions[sessions.length - 1].score;
+
+  const scoreValues = sessions.map((s) => s.score);
 
   //line colors depending on the latestScore
   let lineColor = "#ef4444"; //Default Red
@@ -38,7 +42,14 @@ export default function ScoreTrendCard({ sessions }: ScoreTrendCardProps) {
             </p>
           ) : (
             /* succes state */
-            <div>Sparkline Placeholder</div>
+            <div>
+              <Sparklines data={scoreValues} margin={5} height={60}>
+                <SparklinesLine
+                  style={{ stroke: lineColor, strokeWidth: 3, fill: "none" }}
+                />
+                <SparklinesSpots size={3} style={{ fill: lineColor }} />
+              </Sparklines>
+            </div>
           )}
         </div>
       </div>
