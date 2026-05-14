@@ -6,7 +6,12 @@ import EvaluationSkeleton from "./EvaluationSkeleton";
 type Evaluation = {
   completeness: "Fully answered" | "Partially answered" | "Did not answer";
   format_compliance: string;
-  missing_elements: string[];
+
+  missing_elements: {
+    requirement: string;
+    issue: string;
+  }[];
+
   suggested_follow_up: string | null;
 };
 
@@ -68,9 +73,16 @@ export default function EvaluationPanel({
         <p className="font-medium">Missing elements</p>
 
         {evaluation.missing_elements.length > 0 ? (
-          <ul className="list-disc ml-5 text-gray-700">
+          <ul className="list-disc ml-5 text-gray-700 space-y-2">
             {evaluation.missing_elements.map((item, idx) => (
-              <li key={idx}>{item}</li>
+              <li key={idx}>
+                <p className="font-medium">
+                  Requirement: {item.requirement}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {item.issue}
+                </p>
+              </li>
             ))}
           </ul>
         ) : (

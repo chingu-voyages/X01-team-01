@@ -13,7 +13,12 @@ const EvaluationSchema = z.object({
 
   format_compliance: z.string(),
 
-  missing_elements: z.array(z.string()),
+ missing_elements: z.array(
+    z.object({
+      requirement: z.string(),
+      issue: z.string(),
+    })
+  ),
 
   suggested_follow_up: z.string().nullable(),
 });
@@ -84,6 +89,26 @@ Examples:
 
 ## MISSING ELEMENT RULES
 
+Each missing element MUST include:
+
+- requirement:
+  the exact requirement that was expected
+
+- issue:
+  a concise explanation of how the response failed to satisfy it
+
+Good example:
+{
+  "requirement": "Four-verse rap structure",
+  "issue": "The response used prose paragraphs instead of four verses."
+}
+
+Bad example:
+{
+  "requirement": "Needs work",
+  "issue": "Could be better"
+}
+
 - Compare the response against ALL Pentagram fields:
   persona
   context
@@ -106,7 +131,7 @@ Examples:
   suggested_follow_up MUST:
   - be concise
   - be copy-ready
-  - directly request the missing information
+  - directly request ONLY the missing element, without restating the original prompt structure
   - start with an action-oriented instruction
 
 Good example:
@@ -132,11 +157,81 @@ Output:
 Constraint:
 "${constraint}"
 
+## REQUIRED PRE-CHECK STEP
+
+Before evaluating the response, you MUST internally extract and verify all required obligations from the Pentagram prompt.
+
+You MUST identify:
+
+- required subject matter
+- required formatting
+- required structure
+- required tone/persona behavior
+- required constraints
+- prohibited behavior
+- required depth/detail
+
+You MUST compare the response against this extracted checklist.
+
+If any requirement is missing, weakened, partially satisfied, or ignored,
+it MUST be reported in missing_elements.
+
+Do NOT assume the response is correct simply because it addresses the general topic.
+
+You are acting as a strict QA reviewer, not a supportive assistant.
+
+## STRICT EVALUATION RULES
+
+A response is NOT "Fully answered" if:
+- any explicit constraint was ignored
+- any requested format was violated
+- persona behavior was absent
+- required structure was incomplete
+- requested detail/depth was missing
+
+Even if the general topic was addressed correctly,
+missing prompt requirements MUST reduce the score.
+
+## STRICT FAILURE DETECTION
+
+When uncertain between:
+- "Fully answered"
+and
+- "Partially answered"
+
+You MUST choose "Partially answered".
+
+Do NOT give credit for implied compliance.
+
+Only mark a requirement as satisfied if it is explicitly present in the response.
+
 ## AI RESPONSE TO EVALUATE
 
 """
 ${response}
 """
+
+## NEGATIVE CONSTRAINT (CRITICAL)
+
+STRICT PROHIBITIONS:
+- Do NOT repeat or restate Persona
+- Do NOT repeat Context
+- Do NOT repeat Output format requirements
+- Do NOT re-describe the full task
+- Do NOT reconstruct the original Pentagram prompt
+- Do NOT bundle multiple missing fields into one instruction
+
+The follow-up must ONLY address the specific missing element.
+
+If multiple elements are missing, choose the MOST IMPORTANT one only.
+
+## STYLE RULE
+
+Bad:
+"Rewrite the response as a four-verse rap with a humorous tone and add stronger reasoning"
+
+Good:
+"Add clearer justification for the ethical trade-off in the decision"
 
 ## OUTPUT (STRICT JSON ONLY)
 
@@ -145,7 +240,12 @@ ${response}
 
   "format_compliance": string,
 
-  "missing_elements": string[],
+  "missing_elements": [
+  {
+    "requirement": string,
+    "issue": string
+  }
+],
 
   "suggested_follow_up": string | null
 }
@@ -160,12 +260,17 @@ ${response}
     // ✅ Safe parsing
     let parsed;
 
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      const cleaned = text.replace(/```json|```/g, "").trim();
-      parsed = JSON.parse(cleaned);
-    }
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in Gemini response");
+        }
+
+        parsed = JSON.parse(jsonMatch[0]);
+      }
 
     parsed.suggested_follow_up =
     typeof parsed.suggested_follow_up === "string" &&

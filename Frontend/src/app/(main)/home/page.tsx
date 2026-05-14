@@ -9,7 +9,7 @@ import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ScoringResponse,
   shouldShowSuggestion,
@@ -85,14 +85,33 @@ export default function Home() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
 
-  //Check if the form is valid and Redux has values
-  const isReduxValid = Object.values(values).every((val) => val.trim() !== "");
-  const canSubmit = isValid && isReduxValid;
+  //checks if info is valid
+  const canSubmit = isValid;
+
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  const PENTAGRAM_STORAGE_KEY = "pentagram_form";
 
   //Needed for redux rehydration so EvaluationButton doesnt think prompt fields are empty when they arn'tw
-      useEffect(() => {
-      reset(values);
-    }, [values, reset]);
+    useEffect(() => {
+  const saved = localStorage.getItem(PENTAGRAM_STORAGE_KEY);
+
+  if (saved) {
+    const parsed = JSON.parse(saved);
+
+    reset(parsed);
+    persistFormToRedux(parsed);
+  }
+
+  setHasHydrated(true);
+}, [reset]);
+
+    //Helper function that centralizes redux writes so redux is updated on save only
+    function persistFormToRedux(formData: Record<FieldId, string>) {
+      Object.entries(formData).forEach(([field, value]) => {
+        setFieldValue(field as FieldId, value);
+      });
+    }
 
   // Needed to check whether prompt is the same or has been changed
   const isSameAsLastScore =
@@ -101,7 +120,7 @@ export default function Home() {
       (key) => lastScoredValues[key] === formValues[key],
     );
 
-    //watchesfor any changes in the 5 promptfields so that it can reset any active panels
+    //watches for any changes in the 5 promptfields so that it can reset any active panels
     const watchedPersona = watch("persona");
     const watchedContext = watch("context");
     const watchedTask = watch("task");
@@ -122,27 +141,31 @@ export default function Home() {
     ]);
 
   //Sends prompt to api
-  async function onSubmit() {
+  async function onSubmit(formData: Record<FieldId, string>) {
     setIsLoading(true);
     setResult(null);
     setError(null);
 
     resetAnalysisPanels(); // resets panels (score and evaluation panels etc..)
 
+    persistFormToRedux(formData);
+
     // --- DEMO MODE ---
 
     const isDemo =
       new URLSearchParams(window.location.search).get("demo") === "true";
     if (isDemo) {
-      const manualPrompt = `Persona: ${values.persona}
-    Context: ${values.context}
-    Task: ${values.task}
-    Output: ${values.output}
-    Constraint: ${values.constraint}`;
+      const manualPrompt = 
+      `Persona: ${formData.persona}
+        Context: ${formData.context}
+        Task: ${formData.task}
+        Output: ${formData.output}
+        Constraint: ${formData.constraint}`;
 
       setResult(manualPrompt);
-
       setIsLoading(false);
+
+      return;
     }
 
     const controller = new AbortController();
@@ -150,12 +173,12 @@ export default function Home() {
 
     //Use usePentagram values
     const prompt = `
-    Persona: ${values.persona}
-    Context: ${values.context}
-    Task: ${values.task}
-    Output: ${values.output}
-    Constraint: ${values.constraint}
-  `;
+      Persona: ${formData.persona}
+      Context: ${formData.context}
+      Task: ${formData.task}
+      Output: ${formData.output}
+      Constraint: ${formData.constraint}
+      `;
 
     try {
       const res = await fetch("/api/gemini", {
@@ -329,34 +352,45 @@ export default function Home() {
   }
 
   function handleUseFollowUp(followUp: string) {
-    reset({
+    // update RHF only
+    setValue("task", followUp, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    // persist snapshot to Redux
+    persistFormToRedux({
       ...watch(),
       task: followUp,
     });
 
-    setFieldValue("task", followUp);
-
-    // optional UX feedback (matches your existing pattern)
-    alert("Task field updated with follow-up.");
+    toast.success("Task field updated with follow-up.");
   }
 
 
   function handleApplySuggestion(field: FieldId, newValue: string) {
     //capture 'original' value before changing it
-    const oldValue = values[field];
+    const oldValue = watch(field);
 
     //UI and state update
     setValue(field as any, newValue, {
       shouldDirty: true,
       shouldValidate: true,
     });
-    setFieldValue(field as FieldId, newValue);
+    //setFieldValue(field as FieldId, newValue);
+
+    // persist checkpoint to Redux
+    persistFormToRedux({
+      ...watch(),
+      [field]: newValue,
+    });
 
     //undo function
     function handleUndo() {
       //revert Hook Form and Redux to old value
-      setValue(field as any, oldValue, { shouldDirty: true });
-      setFieldValue(field, oldValue);
+      setValue(field as any, oldValue, { shouldDirty: true, shouldValidate: true, });
+      //setFieldValue(field, oldValue);
+      persistFormToRedux({ ...watch(), [field]: oldValue, });
     }
 
     //close modal
@@ -394,11 +428,7 @@ export default function Home() {
 //////////////////////////////////////////////////////////////////////////////////
 
   const handleFillTestData = () => {
-    Object.entries(testData).forEach(([field, value]) => {
-      setFieldValue(field as any, value);
-    });
-
-    reset(testData);
+    reset(testData); persistFormToRedux(testData);
   };
 
   //Helper function to delete panels on resubmitting a prompt or changing one of the 5 prompts
@@ -409,6 +439,27 @@ export default function Home() {
   setScoreError(null);
   setLastScoredValues(null);
 }
+
+useEffect(() => {
+  if (!hasHydrated) return;
+
+  const data = {
+    persona: watchedPersona,
+    context: watchedContext,
+    task: watchedTask,
+    output: watchedOutput,
+    constraint: watchedConstraint,
+  };
+
+  localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
+}, [
+  hasHydrated,
+  watchedPersona,
+  watchedContext,
+  watchedTask,
+  watchedOutput,
+  watchedConstraint,
+]);
 
   return (
     <>
@@ -454,7 +505,7 @@ export default function Home() {
         <SubmitButton
           isValid={canSubmit}
           handleSubmit={handleSubmit}
-          onSubmit={() => onSubmit()}
+          onSubmit={onSubmit}
           isLoading={isLoading}
         />
 
