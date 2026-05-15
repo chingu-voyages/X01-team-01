@@ -25,5 +25,5 @@ export const useHistory = (initialData: Prompt[]) => {
     setHasMore(moreAvaliable);
   }
 
-  return { visiblePrompts, loadMore, hasMore };
+  return { visiblePrompts, setVisiblePrompts, loadMore, hasMore };
 };
