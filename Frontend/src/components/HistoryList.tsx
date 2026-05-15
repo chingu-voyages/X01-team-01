@@ -9,8 +9,19 @@ interface HistoryListProps {
 }
 
 export default function HistoryListProps({ allData }: HistoryListProps) {
-  const { visiblePrompts, loadMore, hasMore } = useHistory(allData);
+  const { visiblePrompts, setVisiblePrompts, loadMore, hasMore } =
+    useHistory(allData);
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
+
+  function handleDelete(uid: string) {
+    if (window.confirm("Are you sure you want to delete this prompt?")) {
+      //filter local state to remove the item
+      setVisiblePrompts((prev) => prev.filter((p) => p.uid !== uid));
+
+      //close modal
+      setSelectedPrompt(null);
+    }
+  }
 
   //empty state
   if (allData.length === 0) {
@@ -99,7 +110,10 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
               <button className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded">
                 Favourite
               </button>
-              <button className="px-3 py-1 bg-red-100 text-red-700 rounded">
+              <button
+                onClick={() => handleDelete(selectedPrompt.uid)}
+                className="px-3 py-1 bg-red-100 text-red-700 rounded"
+              >
                 Delete
               </button>
             </div>
