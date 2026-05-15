@@ -3,6 +3,8 @@
 import { User, Search, ListFilter } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import ScoreTrendCard from "@/components/ScoreTrendCard";
+import { mockScoredHistory } from "@/app/utils/mockData";
 
 export default function HistoryLayout({
   children,
@@ -61,7 +63,10 @@ export default function HistoryLayout({
               <p className="text-sm md:text-lg">words</p>
             </div>
           </div>
-          <div className="col-span-2 bg-gray-200 p-4 rounded-lg">
+          <div
+            className={`bg-gray-200 p-4 rounded-lg ${
+              mockScoredHistory.length === 0 ? "col-span-2" : "col-span-1"
+            }`}>
             <div className="uppercase text-xs md:text-sm">Rating</div>
             <div className="text-5xl md:text-6xl mt-5">94%</div>
             <div className="w-full h-2 rounded-full bg-gray-600">
@@ -71,12 +76,15 @@ export default function HistoryLayout({
               ></div>
             </div>
           </div>
+          <ScoreTrendCard sessions={mockScoredHistory} />
         </div>
       </header>
 
       <main className="mt-6">
         <div className="flex justify-between">
-          <div className="text-lg md:text-2xl tracking-tighter">Prompt History</div>
+          <div className="text-lg md:text-2xl tracking-tighter">
+            Prompt History
+          </div>
           <div className="flex gap-1 md:gap-4 transition-colors duration-200">
             <div
               className={`pr-1 md:pr-4 border-r border-black/20 hover:cursor-pointer
@@ -97,7 +105,6 @@ export default function HistoryLayout({
             <Search className="w-4 md:w-6 hover:cursor-pointer" />
             <ListFilter className="w-4 md:w-6 hover:cursor-pointer" />
           </div>
-          
         </div>
         {children}
       </main>
