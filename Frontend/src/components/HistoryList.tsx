@@ -23,6 +23,24 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
     }
   }
 
+  function handleDuplicate(prompt: Prompt) {
+    const duplicatedPrompt: Prompt = {
+      ...prompt,
+      uid: `copy-${Date.now()}`, //unique ID for the copy
+      date: new Date().toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }), //the date is "today"
+    };
+
+    //duplicate item is added to the top of the list
+    setVisiblePrompts((prev) => [duplicatedPrompt, ...prev]);
+
+    //close the modal so the user sees the list
+    setSelectedPrompt(null);
+  }
+
   //empty state
   if (allData.length === 0) {
     return (
@@ -104,7 +122,10 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
               <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded">
                 Edit
               </button>
-              <button className="px-3 py-1 bg-green-100 text-green-700 rounded">
+              <button
+                onClick={() => handleDuplicate(selectedPrompt)}
+                className="px-3 py-1 bg-green-100 text-green-700 rounded"
+              >
                 Duplicate
               </button>
               <button className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded">
