@@ -1,6 +1,7 @@
 import { useHistory } from "@/hooks/useHistory";
 import { Prompt } from "@/types/history";
 import PromptCard from "./PromptCard";
+import Link from "next/link";
 
 interface HistoryListProps {
   allData: Prompt[];
@@ -8,6 +9,20 @@ interface HistoryListProps {
 
 export default function HistoryListProps({ allData }: HistoryListProps) {
   const { visiblePrompts, loadMore, hasMore } = useHistory(allData);
+
+  if (allData.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-gray-50">
+        <p className="text-gray-500 mb-4">No prompts saved yet</p>
+        <Link 
+          href="/home"
+          className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-200 transition-colors"
+        >
+          Assemble a Prompt!
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
