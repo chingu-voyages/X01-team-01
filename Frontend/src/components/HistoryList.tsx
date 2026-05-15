@@ -2,6 +2,7 @@ import { useHistory } from "@/hooks/useHistory";
 import { Prompt } from "@/types/history";
 import PromptCard from "./PromptCard";
 import Link from "next/link";
+import { useState } from "react";
 
 interface HistoryListProps {
   allData: Prompt[];
@@ -9,29 +10,33 @@ interface HistoryListProps {
 
 export default function HistoryListProps({ allData }: HistoryListProps) {
   const { visiblePrompts, loadMore, hasMore } = useHistory(allData);
+  const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
 
+  //empty state
   if (allData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-gray-50">
         <p className="text-gray-500 mb-4">No prompts saved yet</p>
-        <Link 
+        <Link
           href="/home"
           className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-200 transition-colors"
         >
           Assemble a Prompt!
         </Link>
       </div>
-    )
+    );
   }
 
+  //render 3 cards
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
         {visiblePrompts.map((item) => (
-          <PromptCard key={item.uid} data={item} />
+          <PromptCard key={item.uid} data={item} onClick={setSelectedPrompt} />
         ))}
       </div>
 
+      {/* load 3 more cards */}
       {hasMore && (
         <button
           onClick={loadMore}
@@ -39,6 +44,67 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
         >
           Load More
         </button>
+      )}
+
+      {/* detailed view */}
+      {selectedPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90-vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-bold">{selectedPrompt.task}</h2>
+              <button
+                onClick={() => setSelectedPrompt(null)}
+                className="text-gray-500 hover:text-black"
+              >
+                X
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <strong>Persona:</strong>
+                {selectedPrompt.persona}
+              </div>
+              <div>
+                <strong>Context:</strong>
+                {selectedPrompt.context}
+              </div>
+              <div>
+                <strong>Task:</strong>
+                {selectedPrompt.task}
+              </div>
+              <div>
+                <strong>Output:</strong>
+                {selectedPrompt.output}
+              </div>
+              <div>
+                <strong>Constraints:</strong>
+                {selectedPrompt.constraints}
+              </div>
+              <div className="p-3 bg-gray-50 rounded border">
+                <strong>Prompt:</strong>
+                <p className="mt-2 whitespace-pre-wrap">
+                  {selectedPrompt.prompt}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t">
+              <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded">
+                Edit
+              </button>
+              <button className="px-3 py-1 bg-green-100 text-green-700 rounded">
+                Duplicate
+              </button>
+              <button className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded">
+                Favourite
+              </button>
+              <button className="px-3 py-1 bg-red-100 text-red-700 rounded">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
