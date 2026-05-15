@@ -41,6 +41,21 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
     setSelectedPrompt(null);
   }
 
+  function handleToggleFavorite(uid: string) {
+    //update list state
+    setVisiblePrompts((prev) =>
+      prev.map((p) =>
+        p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
+      ),
+    );
+
+    if (selectedPrompt?.uid === uid) {
+      setSelectedPrompt((prev) =>
+        prev ? { ...prev, isFavourite: !prev.isFavourite } : null,
+      );
+    }
+  }
+
   //empty state
   if (allData.length === 0) {
     return (
@@ -61,7 +76,12 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
     <div className="space-y-4">
       <div className="grid gap-4">
         {visiblePrompts.map((item) => (
-          <PromptCard key={item.uid} data={item} onClick={setSelectedPrompt} />
+          <PromptCard
+            key={item.uid}
+            data={item}
+            onClick={setSelectedPrompt}
+            onToggleFavorite={handleToggleFavorite}
+          />
         ))}
       </div>
 
@@ -79,6 +99,7 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
       {selectedPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90-vh] overflow-y-auto p-6">
+            {/* nodal header */}
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-bold">{selectedPrompt.task}</h2>
               <button
@@ -89,6 +110,7 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
               </button>
             </div>
 
+            {/* modal body */}
             <div className="space-y-4 text-sm">
               <div>
                 <strong>Persona:</strong>
@@ -118,7 +140,18 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
               </div>
             </div>
 
+            {/* modal footer - actions */}
             <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t">
+              <button
+                onClick={() => handleToggleFavorite(selectedPrompt.uid)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  selectedPrompt.isFavourite
+                    ? "bg-yellow-400 text-white hover:bg-yellow-500"
+                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {selectedPrompt.isFavourite ? "★ Favourited" : "☆ Favourite"}
+              </button>
               <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded">
                 Edit
               </button>
