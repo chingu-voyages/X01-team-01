@@ -3,6 +3,9 @@ import { Prompt } from "@/types/history";
 import PromptCard from "./PromptCard";
 import Link from "next/link";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { setEntireForm } from "@/redux/features/pentagramSlice";
+import { useRouter } from "next/navigation";
 
 interface HistoryListProps {
   allData: Prompt[];
@@ -16,6 +19,9 @@ export default function HistoryList({
   const { visiblePrompts, setVisiblePrompts, loadMore, hasMore } =
     useHistory(allData);
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
+
+  const dispatch = useDispatch();
+  const router = useRouter();
 
   function handleDelete(uid: string) {
     if (window.confirm("Are you sure you want to delete this prompt?")) {
@@ -57,13 +63,13 @@ export default function HistoryList({
     //update list state
     setVisiblePrompts((prev) =>
       prev.map((p) =>
-        p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p
+        p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
       ),
     );
 
     //notify parent of changes
     const updatedMaster = allData.map((p) =>
-      p.uid === uid ? { ...p, isFavorite: !p.isFavourite } : p
+      p.uid === uid ? { ...p, isFavorite: !p.isFavourite } : p,
     );
     onDataChange(updatedMaster);
 
@@ -170,7 +176,23 @@ export default function HistoryList({
               >
                 {selectedPrompt.isFavourite ? "★ Favourited" : "☆ Favourite"}
               </button>
-              <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded">
+              <button
+                onClick={() => {
+                  const formDataForStorage = {
+                    persona: selectedPrompt.persona,
+                    context: selectedPrompt.context,
+                    task: selectedPrompt.task,
+                    output: selectedPrompt.output,
+                    constraint: selectedPrompt.constraints,
+                  };
+
+                  localStorage.setItem("pentagram_form", JSON.stringify(formDataForStorage));
+
+                  dispatch(setEntireForm(selectedPrompt));
+                  router.push("/home");
+                }}
+                className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
+              >
                 Edit
               </button>
               <button
