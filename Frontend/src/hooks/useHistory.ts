@@ -6,7 +6,7 @@ import fetchMockHistory from "@/app/utils/historyHelpers";
 
 export const useHistory = (initialData: Prompt[]) => {
   const [visiblePrompts, setVisiblePrompts] = useState<Prompt[]>([]);
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(3);
   const [hasMore, setHasMore] = useState(true);
 
   //initial load
@@ -14,7 +14,7 @@ export const useHistory = (initialData: Prompt[]) => {
     const { data, hasMore: moreAvaliable } = fetchMockHistory(initialData, 0);
     setVisiblePrompts(data);
     (setOffset(3), setHasMore(moreAvaliable));
-  }, [initialData]);
+  }, []);
 
   function loadMore() {
     const { data, hasMore: moreAvaliable } = fetchMockHistory(
