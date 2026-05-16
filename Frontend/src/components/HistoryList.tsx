@@ -57,13 +57,13 @@ export default function HistoryList({
     //update list state
     setVisiblePrompts((prev) =>
       prev.map((p) =>
-        p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
+        p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p
       ),
     );
 
     //notify parent of changes
     const updatedMaster = allData.map((p) =>
-      p.uid === uid ? { ...p, isFavorite: !p.isFavourite } : p,
+      p.uid === uid ? { ...p, isFavorite: !p.isFavourite } : p
     );
     onDataChange(updatedMaster);
 
@@ -116,8 +116,8 @@ export default function HistoryList({
       {/* detailed view */}
       {selectedPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90-vh] overflow-y-auto p-6">
-            {/* nodal header */}
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col p-6">
+            {/* modal header */}
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-bold">{selectedPrompt.task}</h2>
               <button
@@ -129,29 +129,29 @@ export default function HistoryList({
             </div>
 
             {/* modal body */}
-            <div className="space-y-4 text-sm">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-sm my-4 text-justify">
               <div>
-                <strong>Persona:</strong>
+                <strong>Persona: </strong>
                 {selectedPrompt.persona}
               </div>
               <div>
-                <strong>Context:</strong>
+                <strong>Context: </strong>
                 {selectedPrompt.context}
               </div>
               <div>
-                <strong>Task:</strong>
+                <strong>Task: </strong>
                 {selectedPrompt.task}
               </div>
               <div>
-                <strong>Output:</strong>
+                <strong>Output: </strong>
                 {selectedPrompt.output}
               </div>
               <div>
-                <strong>Constraints:</strong>
+                <strong>Constraints: </strong>
                 {selectedPrompt.constraints}
               </div>
-              <div className="p-3 bg-gray-50 rounded border">
-                <strong>Prompt:</strong>
+              <div className="p-3 bg-gray-50 rounded border text-justify">
+                <strong>Prompt: </strong>
                 <p className="mt-2 whitespace-pre-wrap">
                   {selectedPrompt.prompt}
                 </p>
@@ -159,7 +159,7 @@ export default function HistoryList({
             </div>
 
             {/* modal footer - actions */}
-            <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t">
+            <div className="mt-6 flex flex-wrap justify-center gap-2 pt-4 border-t">
               <button
                 onClick={() => handleToggleFavorite(selectedPrompt.uid)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -178,9 +178,6 @@ export default function HistoryList({
                 className="px-3 py-1 bg-green-100 text-green-700 rounded"
               >
                 Duplicate
-              </button>
-              <button className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded">
-                Favourite
               </button>
               <button
                 onClick={() => handleDelete(selectedPrompt.uid)}
