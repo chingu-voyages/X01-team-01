@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react";
 import { Prompt } from "@/types/history";
 import fetchMockHistory from "@/app/utils/historyHelpers";

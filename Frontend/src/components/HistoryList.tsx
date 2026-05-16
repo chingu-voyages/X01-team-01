@@ -6,9 +6,13 @@ import { useState } from "react";
 
 interface HistoryListProps {
   allData: Prompt[];
+  onDataChange: (newData: Prompt[]) => void;
 }
 
-export default function HistoryListProps({ allData }: HistoryListProps) {
+export default function HistoryList({
+  allData,
+  onDataChange,
+}: HistoryListProps) {
   const { visiblePrompts, setVisiblePrompts, loadMore, hasMore } =
     useHistory(allData);
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
@@ -17,6 +21,10 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
     if (window.confirm("Are you sure you want to delete this prompt?")) {
       //filter local state to remove the item
       setVisiblePrompts((prev) => prev.filter((p) => p.uid !== uid));
+
+      //notify parent of changes
+      const updatedMaster = allData.filter((p) => p.uid !== uid);
+      onDataChange(updatedMaster);
 
       //close modal
       setSelectedPrompt(null);
@@ -37,6 +45,10 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
     //duplicate item is added to the top of the list
     setVisiblePrompts((prev) => [duplicatedPrompt, ...prev]);
 
+    //notify parent of change
+    const updatedMaster = [duplicatedPrompt, ...allData];
+    onDataChange(updatedMaster);
+
     //close the modal so the user sees the list
     setSelectedPrompt(null);
   }
@@ -48,6 +60,12 @@ export default function HistoryListProps({ allData }: HistoryListProps) {
         p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
       ),
     );
+
+    //notify parent of changes
+    const updatedMaster = allData.map((p) =>
+      p.uid === uid ? { ...p, isFavorite: !p.isFavourite } : p,
+    );
+    onDataChange(updatedMaster);
 
     if (selectedPrompt?.uid === uid) {
       setSelectedPrompt((prev) =>
