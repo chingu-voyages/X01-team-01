@@ -108,7 +108,7 @@ export default function HistoryList({
           />
         ))}
       </div>
-
+ 
       {/* load 3 more cards */}
       {hasMore && (
         <button
