@@ -1,13 +1,13 @@
 // firebase.js
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import {getAuth, GoogleAuthProvider, GithubAuthProvider,signInWithPopup, signOut} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage, ref } from 'firebase/storage';
 
-// ✅ Your Firebase config
+// Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyCwvNfBABvIz9c8KAo8EAc9jhOU1XdLtPY",
+  apiKey: "AIzaSyBkMzsnaK5AWSzGw4gCl4L6MX_W0IdHjGQ",
   authDomain: "x01-ai-helper.firebaseapp.com",
   projectId: "x01-ai-helper",
   storageBucket: "x01-ai-helper.firebasestorage.app",
@@ -16,31 +16,42 @@ const firebaseConfig = {
   measurementId: "G-ENNGX1NY9G"
 };
 
-// ✅ Initialize Firebase
+// Initialize app
 const app = initializeApp(firebaseConfig);
 
-// ✅ Get Firebase services
-const auth = getAuth(app); // React Native persistence handled automatically in v10+
+// Firebase services
+const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const storageRef = ref(storage);
 
-// ✅ Auth helper functions
-function signUp(email, password) {
-  return createUserWithEmailAndPassword(auth, email, password);
+// providers
+const googleProvider = new GoogleAuthProvider();
+const githubProvider = new GithubAuthProvider();
+
+// Google sign in
+function signInWithGoogle() {
+  return signInWithPopup(auth, googleProvider);
 }
 
-function signIn(email, password) {
-  return signInWithEmailAndPassword(auth, email, password);
+// GitHub sign in
+function signInWithGithub() {
+  return signInWithPopup(auth, githubProvider);
 }
 
-// ✅ Export everything
+// Logout
+function logout() {
+  return signOut(auth);
+}
+
+// Exports
 export {
   app,
   auth,
   db,
   storage,
   storageRef,
-  signUp,
-  signIn
+  signInWithGoogle,
+  signInWithGithub,
+  logout
 };

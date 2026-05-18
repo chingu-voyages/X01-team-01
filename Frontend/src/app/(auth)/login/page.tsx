@@ -2,96 +2,124 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn, db } from "@/lib/firebase";
-import { useAppDispatch } from "@/redux/hooks";
-import { setUser } from "@/redux/features/authslice";
-import { doc, getDoc } from "firebase/firestore";
 
-export default function LoginPage() {
+import {
+  signInWithGoogle,
+  signInWithGithub,
+  db
+} from "@/lib/firebase";
+
+import { doc, setDoc, getDoc } from "firebase/firestore";
+
+import { useAppDispatch } from "@/redux/hooks";
+import type { User } from "@/redux/features/authslice";
+import { setUser } from "@/redux/features/authslice";
+
+export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<null | "google" | "github">(null);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleOAuthSignIn = async (
+    providerFn: () => Promise<any>,
+    providerName: "google" | "github"
+  ) => {
     setError("");
-    setLoading(true);
+    setLoadingProvider(providerName);
 
     try {
-      // 1. Sign in user
-      const result = await signIn(email, password);
-      const user = result.user;
+      const result = await providerFn();
+      const firebaseUser = result.user;
 
-      // 2. Get user profile from Firestore
-      const userDocRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userDocRef);
-
-      const userData = userSnap.exists() ? userSnap.data() : null;
-
-      // 3. Store FULL user in Redux
-      dispatch(
-        setUser({
-          uid: user.uid,
-          email: user.email,
-          name: userData?.name || "",
-          photoURL: userData?.photoURL || "",
-        })
+      const providerData = firebaseUser.providerData.find(
+        (p: any) =>
+          p.providerId ===
+          (providerName === "google" ? "google.com" : "github.com")
       );
 
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const userSnap = await getDoc(userRef);
+
+      let userData: User;
+
+      if (!userSnap.exists()) {
+        userData = {
+          id: firebaseUser.uid,
+          oauth_provider: providerName,
+          oauth_provider_id: providerData?.uid || firebaseUser.uid,
+          display_name: firebaseUser.displayName || "",
+          avatar_url: firebaseUser.photoURL || null,
+          email: firebaseUser.email || "",
+          created_at: new Date().toISOString(),
+          last_login_at: new Date().toISOString(),
+        };
+
+        await setDoc(userRef, userData);
+      } else {
+        const existing = userSnap.data() as User;
+
+        userData = {
+          ...existing,
+          last_login_at: new Date().toISOString(),
+        };
+
+        await setDoc(userRef, userData);
+      }
+
+      dispatch(setUser(userData));
       router.push("/home");
+
     } catch (err: any) {
-      setError(err.message || "Failed to login");
+      setError(err.message || `${providerName} Sign-in was not completed. Please try again.`);
     } finally {
-      setLoading(false);
+      setLoadingProvider(null);
     }
   };
 
   return (
     <div className="container py-10">
-      <h1 className="text-2xl font-semibold mb-4">Login</h1>
+      <h1 className="text-2xl font-semibold mb-4">
+        Create your account
+      </h1>
 
-      <form onSubmit={handleLogin} className="flex flex-col gap-3 max-w-sm">
-        <input
-          type="email"
-          placeholder="Email"
-          className="border p-2 rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      {/* Google */}
+      <button
+        onClick={() => handleOAuthSignIn(signInWithGoogle, "google")}
+        disabled={loadingProvider !== null}
+        className={`bg-black text-white p-3 rounded w-full mb-3 flex items-center justify-center transition
+          ${loadingProvider !== null ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}
+        `}
+      >
+        {loadingProvider === "google" ? (
+          <span className="animate-spin">⏳</span>
+        ) : (
+          "Sign in with Google"
+        )}
+      </button>
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="border p-2 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+      {/* GitHub */}
+      <button
+        onClick={() => handleOAuthSignIn(signInWithGithub, "github")}
+        disabled={loadingProvider !== null}
+        className={`bg-gray-900 text-white p-3 rounded w-full flex items-center justify-center transition
+          ${loadingProvider !== null ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}
+        `}
+      >
+        {loadingProvider === "github" ? (
+          <span className="animate-spin">⏳</span>
+        ) : (
+          "Sign in with GitHub"
+        )}
+      </button>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-black text-white p-2 rounded"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-      </form>
-
-      <div className="mt-4 text-sm">
-        <p className="mb-2">Don't have an account?</p>
-
-        <button
-          onClick={() => router.push("/register")}
-          className="text-blue-600 hover:underline"
-        >
-          Create an account
-        </button>
-      </div>
+      {/* Error */}
+      {error && (
+        <p className="text-red-500 text-sm mt-3">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
