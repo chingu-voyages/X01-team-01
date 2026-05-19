@@ -20,6 +20,7 @@ import ComparisonModal from "@/components/ComparisonModal";
 import { toast } from "sonner";
 import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
 import { useAppSelector } from "@/redux/hooks";
+import Link from "next/link";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -60,11 +61,21 @@ export default function Home() {
     if (status === "guest") {
       toast.warning("You are logged in as a guest", {
         id: "guest-mode-warning",
-        description: "Your prompts will not be saved.",
+        description: (
+          <span>
+            <Link
+              href="/login"
+              className="underline font-semibold hover:text-white transition-colors"
+            >
+              Sign in
+            </Link>{" "}
+            to save your prompts to history.
+          </span>
+        ),
         duration: 8000,
         style: {
           background: "#808080",
-        }
+        },
       });
     }
   }, [status]);
