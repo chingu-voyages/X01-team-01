@@ -9,10 +9,12 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  status: "authenticated" | "unauthenticated" | "guest";
 }
 
 const initialState: AuthState = {
   user: null,
+  status: "unauthenticated",
 };
 
 const authSlice = createSlice({
@@ -21,9 +23,14 @@ const authSlice = createSlice({
   reducers: {
     setUser: (state, action: PayloadAction<User | null>) => {
       state.user = action.payload;
+      state.status = action.payload ? "authenticated" : "unauthenticated";
     },
     clearUser: (state) => {
       state.user = null;
+      state.status = "unauthenticated";
+    },
+    setGuestMode: (state) => {
+      ((state.user = null), (state.status = "guest"));
     },
   },
 });
