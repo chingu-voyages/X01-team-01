@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function ProfileSection() {
   return (
-    <div className="flex flex-col gap-2 items-center md:flex-row md:justify-between mb-4">
+    <div className="flex flex-col gap-2 items-center md:flex-row md:justify-between sm:mb-4">
       <div className="flex items-center">
         <div className="w-8 h-8 md:w-20 md:h-20 rounded-full bg-gray-300 flex items-center justify-center">
           <User />
