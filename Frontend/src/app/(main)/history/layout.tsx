@@ -1,6 +1,5 @@
 "use client";
-import HistoryTabs from "@/components/HistoryTabs";
-import HistoryDashboard from "@/components/HistoryDashboard";
+import ProfileSection from "@/components/ProfileSection";
 
 export default function HistoryLayout({
   children,
@@ -9,12 +8,8 @@ export default function HistoryLayout({
 }) {
   return (
     <div className="container">
-      <header className="mt-6 md:mt-2">
-        <HistoryDashboard />
-      </header>
-
       <main className="mt-6">
-        <HistoryTabs />
+        <ProfileSection />
         {children}
       </main>
     </div>

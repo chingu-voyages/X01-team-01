@@ -10,7 +10,7 @@ export default function HistoryTabs() {
 
   return (
     <>
-      <div className="flex justify-between">
+      <div className="flex justify-between mt-10 mb-4">
         <div className="text-lg md:text-2xl tracking-tighter">
           Prompt History
         </div>
