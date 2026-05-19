@@ -56,6 +56,8 @@ export default function Home() {
   //current user status
   const status = useAppSelector((state) => state.auth.status);
 
+  const isGuest = status === "guest";
+
   //fire toast for guest users
   useEffect(() => {
     if (status === "guest") {
@@ -570,18 +572,30 @@ export default function Home() {
 
         {result && (
           <div className="mt-4 flex justify-center">
-            <Button
-              variant="secondary"
-              className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
-              onClick={handleSubmit(onScore)}
-              disabled={isRescoreDisabled}
-            >
-              {!scores
-                ? "Score Prompt"
-                : isSameAsLastScore
-                  ? "Scored"
-                  : "Re-score prompt"}
-            </Button>
+            {isGuest ? (
+              <p className="text-base font-light text-black/70 text-center">
+                <Link
+                  href="/login"
+                  className="underline font-semibold hover:text-slate-800 transition-colors"
+                >
+                  Sign in
+                </Link>{" "}
+                if you would like your prompt to be scored and evaluated.
+              </p>
+            ) : (
+              <Button
+                variant="secondary"
+                className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+                onClick={handleSubmit(onScore)}
+                disabled={isRescoreDisabled}
+              >
+                {!scores
+                  ? "Score Prompt"
+                  : isSameAsLastScore
+                    ? "Scored"
+                    : "Re-score prompt"}
+              </Button>
+            )}
           </div>
         )}
 
@@ -656,14 +670,16 @@ export default function Home() {
 
         {result && (
           <div className="mt-4 flex justify-center">
-            <Button
-              variant="secondary"
-              className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
-              onClick={handleSubmit(onEvaluate)}
-              disabled={isEvaluating}
-            >
-              {isEvaluating ? "Evaluating..." : "Evaluate response"}
-            </Button>
+            {isGuest ? null : (
+              <Button
+                variant="secondary"
+                className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+                onClick={handleSubmit(onEvaluate)}
+                disabled={isEvaluating}
+              >
+                {isEvaluating ? "Evaluating..." : "Evaluate response"}
+              </Button>
+            )}
           </div>
         )}
 
