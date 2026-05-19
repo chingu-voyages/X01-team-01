@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/redux/hooks";
 import { Button } from "@/components/ui/button";
+import { setGuestMode } from "@/redux/features/authslice";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function LoginPage() {
           </h3>
         </div>
         <div className="flex flex-col gap-3 w-full">
-          <p className="text-center text-sm sm:text-base text-black/70">
+          <p className="tracking-tight text-center text-sm sm:text-base text-black/70">
             Sign in with:
           </p>
           <Button variant="default" className="h-10">
@@ -40,6 +41,10 @@ export default function LoginPage() {
         <div>
           <button
             type="button"
+            onClick={() => {
+              dispatch(setGuestMode())
+              router.push("/home")
+            }}
             className="text-sm text-slate-600 hover:text-slate-900 underline underline-offset-3 font-medium transition-colors mt-4 block mx-auto"
           >
             Continue without signing in.

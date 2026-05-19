@@ -19,6 +19,7 @@ import { usePentagram } from "@/redux/hooks/usePentagram";
 import ComparisonModal from "@/components/ComparisonModal";
 import { toast } from "sonner";
 import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
+import { useAppSelector } from "@/redux/hooks";
 
 export default function Home() {
   // const user = useAppSelector((state) => state.auth.user);
@@ -50,6 +51,23 @@ export default function Home() {
       constraint: "",
     },
   });
+
+  //current user status
+  const status = useAppSelector((state) => state.auth.status);
+
+  //fire toast for guest users
+  useEffect(() => {
+    if (status === "guest") {
+      toast.warning("You are logged in as a guest", {
+        id: "guest-mode-warning",
+        description: "Your prompts will not be saved.",
+        duration: 8000,
+        style: {
+          background: "#808080",
+        }
+      });
+    }
+  }, [status]);
 
   //scoring logic
   const [scores, setScores] = useState<{
@@ -93,25 +111,25 @@ export default function Home() {
   const PENTAGRAM_STORAGE_KEY = "pentagram_form";
 
   //Needed for redux rehydration so EvaluationButton doesnt think prompt fields are empty when they arn'tw
-    useEffect(() => {
-  const saved = localStorage.getItem(PENTAGRAM_STORAGE_KEY);
+  useEffect(() => {
+    const saved = localStorage.getItem(PENTAGRAM_STORAGE_KEY);
 
-  if (saved) {
-    const parsed = JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
 
-    reset(parsed);
-    persistFormToRedux(parsed);
-  }
-
-  setHasHydrated(true);
-}, [reset]);
-
-    //Helper function that centralizes redux writes so redux is updated on save only
-    function persistFormToRedux(formData: Record<FieldId, string>) {
-      Object.entries(formData).forEach(([field, value]) => {
-        setFieldValue(field as FieldId, value);
-      });
+      reset(parsed);
+      persistFormToRedux(parsed);
     }
+
+    setHasHydrated(true);
+  }, [reset]);
+
+  //Helper function that centralizes redux writes so redux is updated on save only
+  function persistFormToRedux(formData: Record<FieldId, string>) {
+    Object.entries(formData).forEach(([field, value]) => {
+      setFieldValue(field as FieldId, value);
+    });
+  }
 
   // Needed to check whether prompt is the same or has been changed
   const isSameAsLastScore =
@@ -120,25 +138,24 @@ export default function Home() {
       (key) => lastScoredValues[key] === formValues[key],
     );
 
-    //watches for any changes in the 5 promptfields so that it can reset any active panels
-    const watchedPersona = watch("persona");
-    const watchedContext = watch("context");
-    const watchedTask = watch("task");
-    const watchedOutput = watch("output");
-    const watchedConstraint = watch("constraint");
+  //watches for any changes in the 5 promptfields so that it can reset any active panels
+  const watchedPersona = watch("persona");
+  const watchedContext = watch("context");
+  const watchedTask = watch("task");
+  const watchedOutput = watch("output");
+  const watchedConstraint = watch("constraint");
 
-    useEffect(() => {
-      if (!result && !scores && !evaluation) return;
+  useEffect(() => {
+    if (!result && !scores && !evaluation) return;
 
-      resetAnalysisPanels();
-      
-    }, [
-      watchedPersona,
-      watchedContext,
-      watchedTask,
-      watchedOutput,
-      watchedConstraint,
-    ]);
+    resetAnalysisPanels();
+  }, [
+    watchedPersona,
+    watchedContext,
+    watchedTask,
+    watchedOutput,
+    watchedConstraint,
+  ]);
 
   //Sends prompt to api
   async function onSubmit(formData: Record<FieldId, string>) {
@@ -155,8 +172,7 @@ export default function Home() {
     const isDemo =
       new URLSearchParams(window.location.search).get("demo") === "true";
     if (isDemo) {
-      const manualPrompt = 
-      `Persona: ${formData.persona}
+      const manualPrompt = `Persona: ${formData.persona}
         Context: ${formData.context}
         Task: ${formData.task}
         Output: ${formData.output}
@@ -307,48 +323,46 @@ export default function Home() {
   const isRescoreDisabled = isScoring || isSameAsLastScore;
 
   async function onEvaluate(formData: Record<FieldId, string>) {
-  // Guard against missing Gemini response
-  if (!result) return;
+    // Guard against missing Gemini response
+    if (!result) return;
 
-  setIsEvaluating(true);
-  setEvaluation(null);
-  setEvaluationError(null);
+    setIsEvaluating(true);
+    setEvaluation(null);
+    setEvaluationError(null);
 
-  try {
-    const res = await fetch("/api/evaluate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        persona: formData.persona,
-        context: formData.context,
-        task: formData.task,
-        output: formData.output,
-        constraint: formData.constraint,
-        response: result
-      }),
-    });
+    try {
+      const res = await fetch("/api/evaluate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          persona: formData.persona,
+          context: formData.context,
+          task: formData.task,
+          output: formData.output,
+          constraint: formData.constraint,
+          response: result,
+        }),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Request failed: ${res.status} - ${text}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Request failed: ${res.status} - ${text}`);
+      }
+
+      const resultData = await res.json();
+
+      console.log("EVALUATE RESPONSE:", resultData);
+
+      setEvaluation(resultData);
+    } catch (err) {
+      console.error("Evaluation error:", err);
+
+      setEvaluationError("Evaluation unavailable. Please try again.");
+    } finally {
+      setIsEvaluating(false);
     }
-
-    const resultData = await res.json();
-
-    console.log("EVALUATE RESPONSE:", resultData);
-
-    setEvaluation(resultData);
-  } catch (err) {
-    console.error("Evaluation error:", err);
-
-    setEvaluationError(
-      "Evaluation unavailable. Please try again."
-    );
-  } finally {
-    setIsEvaluating(false);
-  }
   }
 
   function handleUseFollowUp(followUp: string) {
@@ -366,7 +380,6 @@ export default function Home() {
 
     toast.success("Task field updated with follow-up.");
   }
-
 
   function handleApplySuggestion(field: FieldId, newValue: string) {
     //capture 'original' value before changing it
@@ -388,9 +401,12 @@ export default function Home() {
     //undo function
     function handleUndo() {
       //revert Hook Form and Redux to old value
-      setValue(field as any, oldValue, { shouldDirty: true, shouldValidate: true, });
+      setValue(field as any, oldValue, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
       //setFieldValue(field, oldValue);
-      persistFormToRedux({ ...watch(), [field]: oldValue, });
+      persistFormToRedux({ ...watch(), [field]: oldValue });
     }
 
     //close modal
@@ -415,7 +431,7 @@ export default function Home() {
     constraint: `you can only talk like Moira Rose`,
   } as const;
 
- // more temporary stuff ///////////////////////////////////////////////////////////////////////////////
+  // more temporary stuff ///////////////////////////////////////////////////////////////////////////////
   const mockEvaluationResponse = `
     Authentication works by verifying a user's identity.
 
@@ -425,41 +441,42 @@ export default function Home() {
 
     JWT tokens can also be used for session management.
     `;
-//////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////
 
   const handleFillTestData = () => {
-    reset(testData); persistFormToRedux(testData);
+    reset(testData);
+    persistFormToRedux(testData);
   };
 
   //Helper function to delete panels on resubmitting a prompt or changing one of the 5 prompts
   function resetAnalysisPanels() {
-  setScores(null);
-  setEvaluation(null);
-  setEvaluationError(null);
-  setScoreError(null);
-  setLastScoredValues(null);
-}
+    setScores(null);
+    setEvaluation(null);
+    setEvaluationError(null);
+    setScoreError(null);
+    setLastScoredValues(null);
+  }
 
-useEffect(() => {
-  if (!hasHydrated) return;
+  useEffect(() => {
+    if (!hasHydrated) return;
 
-  const data = {
-    persona: watchedPersona,
-    context: watchedContext,
-    task: watchedTask,
-    output: watchedOutput,
-    constraint: watchedConstraint,
-  };
+    const data = {
+      persona: watchedPersona,
+      context: watchedContext,
+      task: watchedTask,
+      output: watchedOutput,
+      constraint: watchedConstraint,
+    };
 
-  localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
-}, [
-  hasHydrated,
-  watchedPersona,
-  watchedContext,
-  watchedTask,
-  watchedOutput,
-  watchedConstraint,
-]);
+    localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
+  }, [
+    hasHydrated,
+    watchedPersona,
+    watchedContext,
+    watchedTask,
+    watchedOutput,
+    watchedConstraint,
+  ]);
 
   return (
     <>
@@ -484,7 +501,7 @@ useEffect(() => {
           </button>
         </div>
 
- {/* only for testing */}
+        {/* only for testing */}
         <button
           type="button"
           onClick={() => {
@@ -498,7 +515,7 @@ useEffect(() => {
         >
           test evaluate
         </button>
-         {/* only for testing */}
+        {/* only for testing */}
 
         <FormSection control={control} resetField={resetField} watch={watch} />
 
@@ -627,25 +644,25 @@ useEffect(() => {
         )}
 
         {result && (
-                <div className="mt-4 flex justify-center">
-                  <Button
-                    variant="secondary"
-                    className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
-                    onClick={handleSubmit(onEvaluate)}
-                    disabled={isEvaluating}
-                  >
-                    {isEvaluating ? "Evaluating..." : "Evaluate response"}
-                  </Button>
-                </div>
-              )}
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="secondary"
+              className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+              onClick={handleSubmit(onEvaluate)}
+              disabled={isEvaluating}
+            >
+              {isEvaluating ? "Evaluating..." : "Evaluate response"}
+            </Button>
+          </div>
+        )}
 
-              <EvaluationPanel
-                evaluation={evaluation}
-                isEvaluating={isEvaluating}
-                error={evaluationError}
-                onRetry={handleSubmit(onEvaluate)}
-                onUseFollowUp={handleUseFollowUp}
-              />
+        <EvaluationPanel
+          evaluation={evaluation}
+          isEvaluating={isEvaluating}
+          error={evaluationError}
+          onRetry={handleSubmit(onEvaluate)}
+          onUseFollowUp={handleUseFollowUp}
+        />
 
         {isModalOpen && (
           <ComparisonModal
