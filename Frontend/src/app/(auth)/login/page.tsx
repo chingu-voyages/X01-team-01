@@ -20,6 +20,9 @@ export default function LoginPage() {
           </h3>
         </div>
         <div className="flex flex-col gap-3 w-full">
+          <p className="text-center text-sm sm:text-base text-black/70">
+            Sign in with:
+          </p>
           <Button variant="default" className="h-10">
             GitHub
           </Button>
