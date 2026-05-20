@@ -99,7 +99,10 @@ export default function GuestEmptyPage() {
 
         {/* Prompt History */}
         {mockPrompts.map((item) => (
-          <article className="relative bg-gray-200 rounded-md p-4 mb-4">
+          <article
+            key={item.uid}
+            className="relative bg-gray-200 rounded-md p-4 mb-4"
+          >
             <div className="text-xs pb-4">{item.date}</div>
             <div className="text-base pb-2 font-semibold">{item.task}</div>
             <div className="text-sm line-clamp-3">{item.prompt}</div>
