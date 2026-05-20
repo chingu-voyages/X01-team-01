@@ -18,9 +18,9 @@ export default function AnalyticsCard({
       <div className="flex flex-col justify-between bg-gray-200 py-4 px-2 sm:px-4 rounded-lg">
         <div className="uppercase text-xs md:text-sm">{title}</div>
         {hasData ? (
-          <div className="text-4xl md:text-6xl mt-5">
+          <div className="text-2xl md:text-4xl lg:text-6xl mt-5">
             {value}
-            {suffix && <span className="text-sm sm:text-base ml-1">{suffix}</span>}
+            {suffix && <span className="text-xs sm:text-base ml-1">{suffix}</span>}
           </div>
         ) : (
           <div className="mt-5">
