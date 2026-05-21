@@ -59,7 +59,15 @@ export default function RegisterPage() {
           id: firebaseUser.uid,
           oauth_provider: providerName,
           oauth_provider_id: providerData?.uid || firebaseUser.uid,
-          display_name: firebaseUser.displayName || "",
+          display_name:
+          providerName === "github"
+            ? providerData?.displayName ||
+              providerData?.screenName ||
+              firebaseUser.reloadUserInfo?.screenName ||
+              firebaseUser.displayName ||
+              firebaseUser.email?.split("@")[0] ||
+              ""
+            : firebaseUser.displayName || "",
           avatar_url: firebaseUser.photoURL || null,
           email: firebaseUser.email || "",
           created_at: new Date().toISOString(),
