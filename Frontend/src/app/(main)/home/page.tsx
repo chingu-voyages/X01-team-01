@@ -494,17 +494,23 @@ export default function Home() {
   return (
     <>
       <section className="container  section-padding">
-        <div className="mb-10 text-center">
-          <h1 className="mb-2 tracking-tighter leading-tight font-light text-5xl">
-            AI Helper
-          </h1>
-          <h2 className="mb-2 tracking-tighter font-light text-3xl">
-            Sculpt your intent into editorial-grade prompts using the Pentagram
-            framework.
-          </h2>
-          <h3 className="tracking-tighter font-light text-2xl">
+        <div className="mb-12 text-center max-w-3xl mx-auto space-y-4">
+          <h3 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-2">
             Precision architecture for advanced reasoning.
           </h3>
+          <h1 className="tracking-tight text-4xl sm:text-6xl font-black text-gray-900 leading-none">
+            AI{" "}
+            <span className="text-primary bg-linear-to-r from-primary to-primary/70 bg-clip-text">
+              Helper
+            </span>
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-600 font-normal tracking-tight leading-relaxed max-w-2xl mx-auto">
+            Sculpt your intent into{" "}
+            <span className="font-semibold text-gray-900">
+              editorial-grade prompts
+            </span>{" "}
+            using the Pentagram framework.
+          </p>
         </div>
 
         {/* only for testing */}
@@ -545,13 +551,15 @@ export default function Home() {
           </>
         )}
 
+        {/* GENERATED AI RESPONSE */}
         {!isLoading && result && (
           <div className="mt-6 py-1 border-l-4 border-primary pl-6 pr-4 rounded-xl shadow-md bg-secondary/80 text-justify">
-            <h2 className="text-center uppercase my-4 font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">AI response:</h2>
+            <h2 className="text-center uppercase my-4 font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
+              AI response:
+            </h2>
             <div className="prompt-content">
               <ReactMarkdown>{result}</ReactMarkdown>
             </div>
-            
           </div>
         )}
 
@@ -589,7 +597,7 @@ export default function Home() {
             ) : (
               <Button
                 variant="secondary"
-                className="w-full md:w-2xl h-12 text-base font-semibold relative overflow-hidden"
+                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
                 onClick={handleSubmit(onScore)}
                 disabled={isRescoreDisabled}
               >
@@ -605,25 +613,75 @@ export default function Home() {
 
         {isScoring && <ResultSkeleton />}
 
+        {/* SCORES CARD */}
         {scores && !isScoring && (
-          <div className="mt-6 p-4 border rounded bg-white">
-            <p className={getColor(scores.global_scores.clarity)}>
-              Clarity: {scores.global_scores.clarity}/10
-            </p>
+          <div className="mt-6 p-6 border-l-4 border-primary rounded-xl shadow-md bg-secondary/80">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-gray-100">
+              <div>
+                <h3 className="mb-4 text-center uppercase font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
+                  Prompt Scoring
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Weakest field:{" "}
+                  <span className="font-medium text-destructive capitalize">
+                    {scores.weakest_field}
+                  </span>
+                </p>
+              </div>
 
-            <p className={getColor(scores.global_scores.specificity)}>
-              Specificity: {scores.global_scores.specificity}/10
-            </p>
+              {/* score badge */}
+              <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl self-start md:self-auto">
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  Overall
+                </span>
+                <span className="text-2xl font-black">{scores.overall}/10</span>
+              </div>
 
-            <p className={getColor(scores.global_scores.format_guidance)}>
-              Format Guidance: {scores.global_scores.format_guidance}/10
-            </p>
+              {/* individual metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-600">
+                    Clarity
+                  </span>
+                  <span
+                    className={`text-2xl font-bold ${getColor(scores.global_scores.clarity)}`}
+                  >
+                    {scores.global_scores.clarity}
+                    <span className="text-xs text-gray-400 font-normal">
+                      /10
+                    </span>
+                  </span>
+                </div>
 
-            <p className="mt-2 font-semibold">Overall: {scores.overall}/10</p>
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-600">
+                    Specificity
+                  </span>
+                  <span
+                    className={`text-2xl font-bold ${getColor(scores.global_scores.specificity)}`}
+                  >
+                    {scores.global_scores.specificity}
+                    <span className="text-xs text-gray-400 font-normal">
+                      /10
+                    </span>
+                  </span>
+                </div>
 
-            <p className="mt-2 text-gray-600">
-              Weakest field: {scores.weakest_field}
-            </p>
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-600">
+                    Format Guidance
+                  </span>
+                  <span
+                    className={`text-2xl font-bold ${getColor(scores.global_scores.format_guidance)}`}
+                  >
+                    {scores.global_scores.format_guidance}
+                    <span className="text-xs text-gray-400 font-normal">
+                      /10
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -640,24 +698,27 @@ export default function Home() {
           </div>
         )}
 
+        {/* SUGGESTED IMPROVEMENT */}
         {scores && (
-          <div className="mt-6 p-4 border rounded bg-gray-50">
-            <h3 className="font-semibold mb-2">Suggested improvement</h3>
+          <div className="mt-4 p-6 border-l-4 border-primary rounded-xl shadow-sm bg-secondary/50">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              💡 Suggested improvement
+            </h3>
 
             {scores.suggestion ? (
               <>
-                <div className="p-3 bg-white border rounded mb-3 whitespace-pre-wrap">
+                <div className="p-4 bg-white border border-gray-200/80 rounded-lg mb-3 text-sm text-gray-800 whitespace-pre-wrap shadow-inner font-mono tracking-light leading-relaxed">
                   {scores.suggestion.improved}
                 </div>
 
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 mb-4 italic leading-normal">
                   {scores.suggestion.explanation}
                 </p>
 
                 <div className="flex justify-center">
                   <Button
                     variant="secondary"
-                    className="w-full md:w-2xl h-12 text-base font-semibold"
+                    className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
                     onClick={() => setIsModalOpen(true)}
                   >
                     Review Suggestion
@@ -665,7 +726,7 @@ export default function Home() {
                 </div>
               </>
             ) : (
-              <p className="text-gray-500 italic">
+              <p className="text-gray-500 italic text-sm py-2">
                 No suggestion needed — prompt is strong enough.
               </p>
             )}
@@ -677,7 +738,7 @@ export default function Home() {
             {isGuest ? null : (
               <Button
                 variant="secondary"
-                className="w-full md:w-2xl h-12 text-base font-semibold relative overflow-hidden"
+                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
                 onClick={handleSubmit(onEvaluate)}
                 disabled={isEvaluating}
               >

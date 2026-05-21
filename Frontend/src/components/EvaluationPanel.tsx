@@ -53,59 +53,96 @@ export default function EvaluationPanel({
   if (!evaluation) return null;
 
   return (
-    <div className="mt-6 p-4 border rounded bg-white space-y-4">
-      <h3 className="font-semibold text-lg">Evaluation</h3>
-
-      {/* Completeness */}
-      <div>
-        <p className="font-medium">Completeness</p>
-        <p className="text-gray-700">{evaluation.completeness}</p>
+    <div className="mt-6 p-6 border-l-4 border-primary rounded-xl shadow-sm bg-secondary/50 space-y-6">
+      {/* Card header */}
+      <div className="flex items-center justify-between pb-2 border-b border-primary/40">
+        <h3 className="font-semibold text-xl tracking-tight text-gray-900">
+          Evaluation Analysis
+        </h3>
+        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-gray-800">
+          Review Overview
+        </span>
       </div>
 
-      {/* Format compliance */}
-      <div>
-        <p className="font-medium">Format compliance</p>
-        <p className="text-gray-700">{evaluation.format_compliance}</p>
+      {/* Completeness and complience */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <p className="text-sm font-semibold text-gray-600 mb-1">
+            Completeness
+          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {evaluation.completeness}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <p className="text-sm font-semibold text-gray-600 mb-1">
+            Format compliance
+          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {evaluation.format_compliance}
+          </p>
+        </div>
       </div>
 
       {/* Missing elements */}
-      <div>
-        <p className="font-medium">Missing elements</p>
+      <div className="space-y-3">
+        <h4 className="font-semibold text-gray-900 text-sm uppercase tracking-wider">
+          Identified Gaps
+        </h4>
 
         {evaluation.missing_elements.length > 0 ? (
-          <ul className="list-disc ml-5 text-gray-700 space-y-2">
+          <ul className="grid grid-cols-1 gap-2">
             {evaluation.missing_elements.map((item, idx) => (
-              <li key={idx}>
-                <p className="font-medium">
+              <li
+                key={idx}
+                className="p-4 rounded-xl border-l-4 border-destructive bg-destructive/5 flex flex-col gap-1 shadow-xs"
+              >
+                <p className="font-semibold text-sm text-destructive-foreground">
                   Requirement: {item.requirement}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 leading-normal">
                   {item.issue}
                 </p>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500 italic">No gaps identified.</p>
+          <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 text-center">
+            <p className="text-sm text-emerald-800 font-medium flex justify-center items-center gap-1.5">
+              ✨ All requirements met! No gaps identified.
+            </p>
+          </div>
         )}
       </div>
 
       {/* Follow-up */}
       {evaluation.suggested_follow_up && (
-        <div className="pt-2 border-t">
-          <p className="font-medium">Suggested follow-up</p>
+        <div className="pt-5 border-t border-gray-100 space-y-3">
+          <div>
+            <h4 className="font-semibold text-gray-900 text-sm uppercase tracking-wider">
+              Suggested Follow-up
+            </h4>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Run this prompt with Gemini to patch the identified missing areas.
+            </p>
+          </div>
 
-          <p className="text-gray-700 mt-1">
-            Ask Gemini: "{evaluation.suggested_follow_up}"
-          </p>
+          <div className="p-4 bg-secondary border border-gray-400/60 rounded-xl relative group">
+            <p className="text-sm font-mono text-gray-800 leading-relaxed select-all">
+              "{evaluation.suggested_follow_up}"
+            </p>
+          </div>
 
-          <Button
-            variant="secondary"
-            className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
-            onClick={() => onUseFollowUp(evaluation.suggested_follow_up!)}
-          >
-            Use follow-up
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              variant="secondary"
+              className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
+              onClick={() => onUseFollowUp(evaluation.suggested_follow_up!)}
+            >
+              Use Follow-up Prompt
+            </Button>
+          </div>
         </div>
       )}
     </div>
