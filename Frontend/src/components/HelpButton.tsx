@@ -16,7 +16,7 @@ export default function HelpButton({
   return (
     <Button
       variant="ghost"
-      className="hover:bg-transparent p-0"
+      className="text-primary/60 hover:text-primary hover:bg-transparent p-0"
       type="button"
       onClick={() => setOpenHelpId(openHelpId === fieldId ? null : fieldId)}
     >
