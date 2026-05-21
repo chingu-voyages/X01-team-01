@@ -1,7 +1,11 @@
 import { Search, ListFilter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function HistoryTabs() {
+interface HistoryTabsProps {
+  favouritesCount: number;
+}
+
+export default function HistoryTabs({ favouritesCount }: HistoryTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -9,8 +13,8 @@ export default function HistoryTabs() {
   const currentView = searchParams.get("view");
 
   //determine active state
-  const isFavoritesActive = currentView === "favorites";
-  const isAllActive = !isFavoritesActive;
+  const isFavouritesActive = currentView === "favourites";
+  const isAllActive = !isFavouritesActive;
 
   return (
     <>
@@ -22,7 +26,7 @@ export default function HistoryTabs() {
         {/* tabs */}
         <div className="flex gap-1 sm:gap-4 transition-colors duration-200 font-medium">
           <div
-            className={`border-b-2 border-black/20 hover:cursor-pointer transition-all duration-200
+            className={`border-b-2 hover:cursor-pointer transition-all duration-200
                 ${isAllActive ? `text-black border-primary` : `text-black/40 border-transparent hover:text-black`}`}
             onClick={() => router.push("/history")}
           >
@@ -30,10 +34,10 @@ export default function HistoryTabs() {
           </div>
           <div
             className={`border-b-2 hover:cursor-pointer transition-all duration-200
-                ${isFavoritesActive ? `text-black border-primary` : `text-black/40 border-transparent hover:text-black`} `}
-            onClick={() => router.push("/history?view=favorites")}
+                ${isFavouritesActive ? `text-black border-primary` : `text-black/40 border-transparent hover:text-black`} `}
+            onClick={() => router.push("/history?view=favourites")}
           >
-            Favorites (0)
+            Favourites ({favouritesCount})
           </div>
         </div>
         <div className="flex gap-1 md:gap-4">

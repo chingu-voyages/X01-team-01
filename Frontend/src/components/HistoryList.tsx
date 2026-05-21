@@ -10,11 +10,13 @@ import { useRouter } from "next/navigation";
 interface HistoryListProps {
   allData: Prompt[];
   onDataChange: (newData: Prompt[]) => void;
+  currentView: string | null,
 }
 
 export default function HistoryList({
   allData,
   onDataChange,
+  currentView
 }: HistoryListProps) {
   const { visiblePrompts, setVisiblePrompts, loadMore, hasMore } =
     useHistory(allData);
@@ -22,6 +24,14 @@ export default function HistoryList({
 
   const dispatch = useDispatch();
   const router = useRouter();
+
+  //filter favourites
+  const displayedPrompts = visiblePrompts.filter((item) => {
+    if (currentView === "favourites") {
+      return item.isFavourite;
+    }
+    return true;
+  })
 
   function handleDelete(uid: string) {
     if (window.confirm("Are you sure you want to delete this prompt?")) {
@@ -59,7 +69,7 @@ export default function HistoryList({
     setSelectedPrompt(null);
   }
 
-  function handleToggleFavorite(uid: string) {
+  function handleToggleFavourite(uid: string) {
     //update list state
     setVisiblePrompts((prev) =>
       prev.map((p) =>
@@ -69,7 +79,7 @@ export default function HistoryList({
 
     //notify parent of changes
     const updatedMaster = allData.map((p) =>
-      p.uid === uid ? { ...p, isFavorite: !p.isFavourite } : p,
+      p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
     );
     onDataChange(updatedMaster);
 
@@ -99,18 +109,18 @@ export default function HistoryList({
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
-        {visiblePrompts.map((item) => (
+        {displayedPrompts.map((item) => (
           <PromptCard
             key={item.uid}
             data={item}
             onClick={setSelectedPrompt}
-            onToggleFavorite={handleToggleFavorite}
+            onToggleFavourite={handleToggleFavourite}
           />
         ))}
       </div>
  
       {/* load 3 more cards */}
-      {hasMore && (
+      {hasMore && currentView !== "favourites" && (
         <button
           onClick={loadMore}
           className="w-full py-2 mt-4 text-sm font-medium border rounded-md hover:bg-gray-100 transition-colors"
@@ -167,7 +177,7 @@ export default function HistoryList({
             {/* modal footer - actions */}
             <div className="mt-6 flex flex-wrap justify-center gap-2 pt-4 border-t">
               <button
-                onClick={() => handleToggleFavorite(selectedPrompt.uid)}
+                onClick={() => handleToggleFavourite(selectedPrompt.uid)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   selectedPrompt.isFavourite
                     ? "bg-yellow-400 text-white hover:bg-yellow-500"
