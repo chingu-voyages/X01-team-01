@@ -42,16 +42,18 @@ export default function AuthProvider({
               user.displayName || "",
 
             avatar_url:
-              user.photoURL,
+              user.photoURL || null,
 
             email:
               user.email || "",
 
-            created_at:
-              user.metadata.creationTime || "",
+            created_at: user.metadata.creationTime
+              ? new Date(user.metadata.creationTime).toISOString()
+              : "",
 
-            last_login_at:
-              user.metadata.lastSignInTime || "",
+            last_login_at: user.metadata.lastSignInTime
+              ? new Date(user.metadata.lastSignInTime).toISOString()
+              : "",
           })
         );
 

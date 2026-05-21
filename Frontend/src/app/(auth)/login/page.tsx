@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { setGuestMode } from "@/redux/features/authslice";
 import { useAppDispatch } from "@/redux/hooks";
 
 import {
@@ -19,6 +23,8 @@ import { setUser } from "@/redux/features/authslice";
 export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const [loadingProvider, setLoadingProvider] = useState<
     null | "google" | "github"
@@ -141,6 +147,20 @@ export default function RegisterPage() {
               : "Sign in with Google"}
           </Button>
         </div>
+
+        {/* Guest Mode */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                dispatch(setGuestMode());
+                router.push("/home");
+              }}
+              className="text-sm text-slate-600 hover:text-slate-900 underline underline-offset-4 font-medium transition-colors block mx-auto"
+            >
+              Continue without signing in
+            </button>
+          </div>
 
         {/* Error */}
         {error && (
