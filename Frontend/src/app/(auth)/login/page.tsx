@@ -34,7 +34,7 @@ export default function LoginPage() {
             </span>
             <div className="grow border-t border-slate-300" />
           </div>
-          <Button variant="outline" className="h-10">
+          <Button variant="secondary" className="h-10">
             Google
           </Button>
         </div>

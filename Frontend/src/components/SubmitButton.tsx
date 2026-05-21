@@ -21,7 +21,7 @@ export default function SubmitButton({
   return (
     <div className="mt-4 text-center ">
       <Button
-        className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+        className="w-full md:w-2xl h-12 text-base font-bold relative overflow-hidden"
         onClick={handleSubmit(onSubmit)}
         disabled={!isValid || isLoading}
         variant="default"

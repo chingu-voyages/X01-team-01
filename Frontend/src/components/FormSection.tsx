@@ -38,7 +38,7 @@ export default function FormSection({
       {FIELDS.map((field, index) => (
         <Card
           key={field.id}
-          className={`${index === 2 ? "md:col-span-2 " : ""} bg-white rounded-xl shadow-sm border border-neutral-200`}
+          className={`${index === 2 ? "md:col-span-2 " : ""} bg-white rounded-xl shadow-sm border border-neutral-200/80`}
         >
           <CardContent className="mt-4">
             <div className="flex items-center justify-between">
@@ -59,7 +59,7 @@ export default function FormSection({
                 onClick={() => setFieldValue(field.id, "")}
                 disabled={values[field.id] === ""}
                 variant="ghost"
-                className="hover:bg-transparent"
+                className="hover:bg-transparent text-neutral-400 disabled:opacity-40 hover:text-neutral-600 transition-colors"
               >
                 <RotateCcw size={14} />
                 <span className="text-xs">Reset</span>
@@ -81,7 +81,7 @@ export default function FormSection({
                     }}
                     id={field.id}
                     placeholder={field.placeholder}
-                    className="resize-none h-28"
+                    className="resize-none h-28 bg-neutral-50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary"
                     aria-invalid={fieldState.error ? true : false}
                   />
 

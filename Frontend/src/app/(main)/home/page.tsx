@@ -495,14 +495,14 @@ export default function Home() {
     <>
       <section className="container  section-padding">
         <div className="mb-10 text-center">
-          <h1 className="mb-2 tracking-tighter leading-tight font-medium">
+          <h1 className="mb-2 tracking-tighter leading-tight font-light text-5xl">
             AI Helper
           </h1>
-          <h2 className="mb-2 tracking-tighter font-light">
+          <h2 className="mb-2 tracking-tighter font-light text-3xl">
             Sculpt your intent into editorial-grade prompts using the Pentagram
             framework.
           </h2>
-          <h3 className="tracking-tighter font-light">
+          <h3 className="tracking-tighter font-light text-2xl">
             Precision architecture for advanced reasoning.
           </h3>
         </div>
@@ -546,8 +546,12 @@ export default function Home() {
         )}
 
         {!isLoading && result && (
-          <div className="mt-6 p-4 border rounded bg-white prose">
-            <ReactMarkdown>{result}</ReactMarkdown>
+          <div className="mt-6 py-1 border-l-4 border-primary pl-6 pr-4 rounded-xl shadow-md bg-secondary/80 text-justify">
+            <h2 className="text-center uppercase my-4 font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">AI response:</h2>
+            <div className="prompt-content">
+              <ReactMarkdown>{result}</ReactMarkdown>
+            </div>
+            
           </div>
         )}
 
@@ -565,7 +569,7 @@ export default function Home() {
         )}
 
         {!isLoading && !result && !error && (
-          <div className="mt-6 text-gray-500 italic">
+          <div className="mt-6 py-3 border-l-4 border-primary pl-6 pr-4 rounded-lg shadow-md bg-secondary/80 text-gray-800">
             Your generated response will appear here once you submit the form.
           </div>
         )}
@@ -585,7 +589,7 @@ export default function Home() {
             ) : (
               <Button
                 variant="secondary"
-                className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+                className="w-full md:w-2xl h-12 text-base font-semibold relative overflow-hidden"
                 onClick={handleSubmit(onScore)}
                 disabled={isRescoreDisabled}
               >
@@ -653,7 +657,7 @@ export default function Home() {
                 <div className="flex justify-center">
                   <Button
                     variant="secondary"
-                    className="w-full md:w-full h-12 text-base font-bold"
+                    className="w-full md:w-2xl h-12 text-base font-semibold"
                     onClick={() => setIsModalOpen(true)}
                   >
                     Review Suggestion
@@ -673,11 +677,11 @@ export default function Home() {
             {isGuest ? null : (
               <Button
                 variant="secondary"
-                className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+                className="w-full md:w-2xl h-12 text-base font-semibold relative overflow-hidden"
                 onClick={handleSubmit(onEvaluate)}
                 disabled={isEvaluating}
               >
-                {isEvaluating ? "Evaluating..." : "Evaluate response"}
+                {isEvaluating ? "Evaluating..." : "Evaluate Response"}
               </Button>
             )}
           </div>

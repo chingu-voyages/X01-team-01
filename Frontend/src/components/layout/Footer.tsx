@@ -1,20 +1,38 @@
 import Image from "next/image";
-import ChinguLogo from "@/media/chingu-logo.png"
+import ChinguLogo from "@/media/chingu-logo.png";
 
-const dateFormatter = Intl.DateTimeFormat("en-US", {dateStyle: "long"})
+const dateFormatter = Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 
 export default function Footer() {
-  const today: Date = new Date()
-  const formattedDate: string = dateFormatter.format(today)
+  const today: Date = new Date();
+  const formattedDate: string = dateFormatter.format(today);
 
   return (
     <footer className="bg-background relative overflow-hidden flex justify-center border-t border-border p-4 w-full">
       <div className="container">
-        <div className="flex flex-col md:flex-row justify-between items-center">
+        <div className="grid grid-cols-[10rem_auto_10rem] md:flex-row justify-stretch items-center">
           <p className="">
-            <Image src={ChinguLogo} alt="Chingu logo" className="w-8 md:w-10"/>
+            <Image src={ChinguLogo} alt="Chingu logo" className="w-8 md:w-10" />
           </p>
-          <ul className="flex flex-col items-center gap-2 py-2 text-sm
+          <div className="grid grid-cols-2 gap-4 justify-center items-center">
+            <div>
+              <div>
+                <div>Product Owner:</div>
+                <div>Chinedu Olekah</div>
+              </div>
+              <div>
+                <div>Scrum Master:</div>
+                <div>Yangchen Dema</div>
+              </div>
+            </div>
+            <div>
+              <div>Developers:</div>
+              <div>Omar Ramos-Correa</div>
+              <div>Lilla Tóth</div>
+              <div>Yangchen Dema</div>
+            </div>
+          </div>
+          {/*           <ul className="flex flex-col items-center gap-2 py-2 text-sm
                         md:flex-row md:justify-between md:gap-4 md:py-0 md:text-base">
             <li className="md:border-r border-r-black/30 md:pr-4">
               <a
@@ -61,7 +79,7 @@ export default function Footer() {
                 Chinedu Olekah
               </a>
             </li>
-          </ul>
+          </ul> */}
           <p className="text-sm md:text-base">{formattedDate}</p>
         </div>
       </div>

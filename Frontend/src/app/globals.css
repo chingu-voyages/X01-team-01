@@ -67,9 +67,9 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #203461;
+  --primary: #19BD71;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: #e4e7ec;
+  --secondary: #EBF1F1;
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: #697586;
@@ -78,7 +78,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: #e3e8ef;
   --input: oklch(0.922 0 0);
-  --ring: #203461;
+  --ring: #19BD714D;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -187,29 +187,38 @@
 }
 
 @layer utilities {
-  .section-gap {
-    @apply mt-16 lg:mt-20.5;
-  }
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
-  }
-  .shadow-light {
-    box-shadow: var(--shadow-light);
-  }
-  h1 {
-    @apply text-4xl font-bold tracking-tight;
-  }
-  h2 {
-    @apply text-3xl font-semibold tracking-tight;
-  }
-  h3 {
-    @apply text-2xl font-semibold;
-  }
-  h4 {
-    @apply text-xl font-medium;
-  }
-  p {
-    @apply text-base leading-7;
+  /* Give your wrapper a name, like .prompt-content */
+  .prompt-content {
+    /* Style the headers inside the markdown */
+    & h1, & h2, & h3 {
+      @apply text-lg font-semibold text-foreground mt-6 mb-2 tracking-tight block;
+    }
+    
+    /* Add smooth line-height and paragraph spacing */
+    & p {
+      @apply text-base leading-relaxed mb-4 text-foreground/90;
+    }
+
+    /* Style bulleted and numbered lists */
+    & ul {
+      @apply list-disc list-inside mb-4 pl-2;
+    }
+    & ol {
+      @apply list-decimal list-inside mb-4 pl-2;
+    }
+    
+    /* Ensure list items spacing looks clean */
+    & li {
+      @apply mb-1;
+    }
+
+    /* Style bold text and code snippets beautifully */
+    & strong {
+      @apply font-semibold text-foreground;
+    }
+    & code {
+      @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-destructive;
+    }
   }
 }
 

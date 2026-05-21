@@ -41,9 +41,9 @@ export default function Navbar() {
                   key={link.label}
                   href={link.href}
                   className={cn(
-                    "text-base transition-colors",
+                    "text-base",
                     active
-                      ? "text-foreground"
+                      ? "text-foreground underline decoration-primary decoration-2 underline-offset-2"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
