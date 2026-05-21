@@ -32,7 +32,8 @@ export default function ScoreTrendCard({ sessions }: ScoreTrendCardProps) {
 
   return (
     <>
-      <div className="bg-gray-200 p-4 rounded-lg flex flex-col justify-between">
+      <div className="bg-slate-100 p-4 rounded-lg flex flex-col justify-between">
+
         <div className="uppercase text-xs md:text-sm">Score trend</div>
         <div className="text-5xl md:text-6xl mt-5">
           {/* insufficient data */}

@@ -15,7 +15,7 @@ export default function AnalyticsCard({
 }: AnalyticsCardProps) {
   return (
     <>
-      <div className="flex flex-col justify-between bg-gray-200 py-4 px-2 sm:px-4 rounded-lg">
+      <div className="flex flex-col justify-between bg-slate-100 py-4 px-2 sm:px-4 rounded-lg">
         <div className="uppercase text-xs md:text-sm">{title}</div>
         {hasData ? (
           <div className="text-2xl md:text-4xl lg:text-6xl mt-5">
