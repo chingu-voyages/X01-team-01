@@ -6,23 +6,51 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AnalyticsSection() {
-  const [isOpen, setIsOpen] = useState(false);
+  //default is open as requested by PO
+  const [isOpen, setIsOpen] = useState(true);
+  //track whether localStorage was read - to prevent layout shift
+  const [hasMounted, setHasMounted] = useState(false);
+
+  //check if there is a user preference
+  useEffect(() => {
+    const savedState = localStorage.getItem("analytics_section_open");
+    if (savedState !== null) {
+      setIsOpen(savedState === "true");
+    }
+
+    const timer = setTimeout(() => {
+      setHasMounted(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  //save any changes
+  function handleOpenChange(nextState: boolean) {
+    setIsOpen(nextState);
+    localStorage.setItem("analytics_section_open", String(nextState));
+  }
 
   return (
     <>
       <Collapsible
         open={isOpen}
-        onOpenChange={setIsOpen}
-        className={`flex flex-col gap-2 transition-all duration-100 ${isOpen ? `mb-10 bg-linear-to-br from-gray-50 to-emerald-200/50 p-4 rounded-2xl shadow-md` : `mb-4`}`}
+        onOpenChange={handleOpenChange}
+        className={`flex flex-col gap-2 mt-4 
+          ${hasMounted ? "transition-all duration-100" : ""} 
+          ${isOpen ? `mb-10 bg-linear-to-br from-gray-50 to-primary/50 p-4 rounded-2xl shadow-md` : `mb-4`}`}
       >
         <header
-          className={`pl-6 flex justify-center gap-1 ${isOpen ? `mb-4` : `mb-0`}`}
+          className={`pl-6 flex justify-center gap-1 
+            ${isOpen ? `mb-4` : `mb-0`}`}
         >
           <h1
-            className={` text-center tracking-tighter font-light transition-all duration-100 ${isOpen ? `text-3xl sm:text-4xl` : `text-black/50 text-2xl`}`}
+            className={`text-center tracking-tighter font-light 
+              ${hasMounted ? "transition-all duration-100" : ""} 
+              ${isOpen ? `text-3xl sm:text-4xl` : `text-black/50 text-2xl`}`}
           >
             Session Analytics
           </h1>
@@ -30,7 +58,9 @@ export default function AnalyticsSection() {
             <Button
               variant="ghost"
               size="icon"
-              className={`self-center ${isOpen ? `size-8` : `size-4 text-black/50`}`}
+              className={`self-center 
+                ${hasMounted ? "transition-all duration-100" : ""} 
+                ${(hasMounted && isOpen) ? `text-black` : `text-black/50`}`}
             >
               <ChevronsUpDown />
               <span className="sr-only">Toggle for session analytics</span>
