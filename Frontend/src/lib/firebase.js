@@ -43,25 +43,13 @@ githubProvider.setCustomParameters({
 // Google sign in
 async function signInWithGoogle() {
   await signOut(auth);
-
-  try {
-    return await signInWithPopup(auth, googleProvider);
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
+  return signInWithPopup(auth, googleProvider);
 }
 
 // GitHub sign in
 async function signInWithGithub() {
   await signOut(auth);
-
-  try {
-    return await signInWithPopup(auth, githubProvider);
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
+  return signInWithPopup(auth, githubProvider);
 }
 
 // Logout
