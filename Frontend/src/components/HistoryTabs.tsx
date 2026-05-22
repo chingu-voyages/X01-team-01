@@ -6,7 +6,7 @@ export default function HistoryTabs() {
   const router = useRouter();
 
   const isAllActive = pathname === "/history" || pathname === "/history/";
-  const isFavoritesActive = pathname === "/history/favorites";
+  const isFavouritesActive = pathname === "/history/favourites";
 
   return (
     <>
@@ -24,10 +24,10 @@ export default function HistoryTabs() {
           </div>
           <div
             className={`hover:cursor-pointer
-                ${isFavoritesActive ? `text-black` : `text-black/40`} `}
-            onClick={() => router.push("/history/favorites")}
+                ${isFavouritesActive ? `text-black` : `text-black/40`} `}
+            onClick={() => router.push("/history/favourites")}
           >
-            Favorites (0)
+            Favourites (0)
           </div>
         </div>
         <div className="flex gap-1 md:gap-4">

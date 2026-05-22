@@ -59,7 +59,7 @@ export default function HistoryList({
     setSelectedPrompt(null);
   }
 
-  function handleToggleFavorite(uid: string) {
+  function handleToggleFavourite(uid: string) {
     //update list state
     setVisiblePrompts((prev) =>
       prev.map((p) =>
@@ -69,7 +69,7 @@ export default function HistoryList({
 
     //notify parent of changes
     const updatedMaster = allData.map((p) =>
-      p.uid === uid ? { ...p, isFavorite: !p.isFavourite } : p,
+      p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
     );
     onDataChange(updatedMaster);
 
@@ -104,7 +104,7 @@ export default function HistoryList({
             key={item.uid}
             data={item}
             onClick={setSelectedPrompt}
-            onToggleFavorite={handleToggleFavorite}
+            onToggleFavourite={handleToggleFavourite}
           />
         ))}
       </div>
@@ -167,7 +167,7 @@ export default function HistoryList({
             {/* modal footer - actions */}
             <div className="mt-6 flex flex-wrap justify-center gap-2 pt-4 border-t">
               <button
-                onClick={() => handleToggleFavorite(selectedPrompt.uid)}
+                onClick={() => handleToggleFavourite(selectedPrompt.uid)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   selectedPrompt.isFavourite
                     ? "bg-yellow-400 text-white hover:bg-yellow-500"
