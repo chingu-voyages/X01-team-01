@@ -1,7 +1,6 @@
-import { User } from "lucide-react";
-import Link from "next/link";
 import ScoreTrendCard from "@/components/ScoreTrendCard";
 import { mockScoredHistory } from "@/app/utils/mockData";
+import AnalyticsCard from "./AnalyticsCard";
 
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
@@ -11,73 +10,36 @@ export default function HistoryDashboard() {
   const user = useSelector((state: RootState) => state.auth.user);
 
   return (
-    <>
-      <div className="flex flex-col gap-2 items-center md:flex-row md:justify-between">
-        <div className="flex items-center">
-          <div className="w-8 h-8 md:w-20 md:h-20 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-                alt="profile"
+    <div className="grid sm:grid-cols-2 items-center p-4 rounded-2xl bg-linear-to-bl from-gray-50 to-primary/50 shadow-md">
+      <header className="flex justify-center">
+        <h1 className="flex justify-center text-center text-4xl sm:text-7xl tracking-tighter font-light max-w-min">
+          Prompt Analytics
+        </h1>
+      </header>
+      <div className="grid grid-cols-2 gap-4 my-6">
+        <AnalyticsCard title="Prompts generated" value={42} hasData />
+        <AnalyticsCard
+          title="Average length"
+          value={362}
+          suffix="words"
+          hasData
+        />
+        <AnalyticsCard
+          title="Rating"
+          value={94}
+          suffix="%"
+          children={
+            <div className="w-full h-2 rounded-full bg-gray-600">
+              <div
+                style={{ width: "94%" }}
+                className="h-2 rounded-full bg-blue-500 transition-all duration-500"
               />
-            ) : (
-              <User />
-            )}
-          </div>
-          <div className="flex flex-col justify-center px-4">
-            <div className="text-sm md:text-3xl font-semibold">{user?.display_name || "Guest"}</div>
-            <div className="text-xs md:text-sm">{user?.email || ""}</div>
-          </div>
-        </div>
-        <div className="flex gap-2 justify-center items-center">
-          <div>
-            <button
-              type="button"
-              className="border border-gray-300 px-4 py-2 rounded whitespace-nowrap text-xs md:text-base"
-            >
-              Edit profile
-            </button>
-          </div>
-          <div>
-            <Link
-              href="/home"
-              className="bg-gray-300 px-4 py-2 rounded inline-block whitespace-nowrap text-xs md:text-base"
-            >
-              New Prompt
-            </Link>
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-        <div className="bg-gray-200 p-4 rounded-lg">
-          <div className="uppercase text-xs md:text-sm">Prompts generated</div>
-          <div className="text-5xl md:text-6xl mt-5">42</div>
-        </div>
-        <div className="bg-gray-200 p-4 rounded-lg">
-          <div className="uppercase text-xs md:text-sm">Average length</div>
-          <div className="flex items-baseline text-5xl md:text-6xl mt-5">
-            120
-            <p className="text-sm md:text-lg">words</p>
-          </div>
-        </div>
-        <div
-          className={`bg-gray-200 p-4 rounded-lg ${
-            mockScoredHistory.length === 0 ? "col-span-2" : "col-span-1"
-          }`}
-        >
-          <div className="uppercase text-xs md:text-sm">Rating</div>
-          <div className="text-5xl md:text-6xl mt-5">94%</div>
-          <div className="w-full h-2 rounded-full bg-gray-600">
-            <div
-              style={{ width: "94%" }}
-              className="h-2 rounded-full bg-blue-500 transition-all duration-500"
-            ></div>
-          </div>
-        </div>
+            </div>
+          }
+          hasData
+        />
         <ScoreTrendCard sessions={mockScoredHistory} />
       </div>
-    </>
+    </div>
   );
 }
