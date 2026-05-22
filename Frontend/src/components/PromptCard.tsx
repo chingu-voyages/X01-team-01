@@ -3,13 +3,13 @@ import { Prompt } from "@/types/history";
 interface PromptCardProps {
   data: Prompt;
   onClick: (data: Prompt) => void;
-  onToggleFavorite: (uid: string) => void;
+  onToggleFavourite: (uid: string) => void;
 }
 
 export default function PromptCard({
   data,
   onClick,
-  onToggleFavorite,
+  onToggleFavourite,
 }: PromptCardProps) {
   return (
     <article
@@ -19,7 +19,7 @@ export default function PromptCard({
       <button
         onClick={(e) => {
           e.stopPropagation(); //prevents opening the modal
-          onToggleFavorite(data.uid);
+          onToggleFavourite(data.uid);
         }}
         className="absolute top-4 right-4 text-xl hover:scale-110 transition-transform"
       >

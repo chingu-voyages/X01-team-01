@@ -24,7 +24,7 @@ export default function HistoryPage() {
   }
 
   //real-time favourite count
-  const favoritesCount = allPrompts.filter(
+  const favouritesCount = allPrompts.filter(
     (prompt) => prompt.isFavourite,
   ).length;
 
@@ -36,7 +36,7 @@ export default function HistoryPage() {
       <ProfileSection />
       <AnalyticsSection />
       <HistoryDashboard />
-      <HistoryTabs favouritesCount={favoritesCount} />
+      <HistoryTabs favouritesCount={favouritesCount} />
       <HistoryList
         allData={allPrompts}
         onDataChange={setAllPrompts}
