@@ -18,7 +18,7 @@ export default function Navbar() {
   const isLoggedIn: boolean = true;
 
   return (
-    <header className=" z-50 sticky top-0">
+    <header className="z-50 sticky top-0">
       <div className="bg-background/85 backdrop-blur w-full">
         <div className="relative container flex h-20 items-center justify-between gap-2 sm:gap-3 ">
           <Link
