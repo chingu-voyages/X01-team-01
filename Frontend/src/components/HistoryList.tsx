@@ -6,17 +6,18 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setEntireForm } from "@/redux/features/pentagramSlice";
 import { useRouter } from "next/navigation";
+import { Button } from "./ui/button";
 
 interface HistoryListProps {
   allData: Prompt[];
   onDataChange: (newData: Prompt[]) => void;
-  currentView: string | null,
+  currentView: string | null;
 }
 
 export default function HistoryList({
   allData,
   onDataChange,
-  currentView
+  currentView,
 }: HistoryListProps) {
   const { visiblePrompts, setVisiblePrompts, loadMore, hasMore } =
     useHistory(allData);
@@ -31,7 +32,7 @@ export default function HistoryList({
       return item.isFavourite;
     }
     return true;
-  })
+  });
 
   function handleDelete(uid: string) {
     if (window.confirm("Are you sure you want to delete this prompt?")) {
@@ -118,105 +119,164 @@ export default function HistoryList({
           />
         ))}
       </div>
- 
+
       {/* load 3 more cards */}
       {hasMore && currentView !== "favourites" && (
-        <button
+        <div className="flex justify-center">
+          <Button
+          variant="outline"
           onClick={loadMore}
-          className="w-full py-2 mt-4 text-sm font-medium border rounded-md hover:bg-gray-100 transition-colors"
+          className="w-2xl h-11 mt-6 text-sm font-semibold tracking-wide border-primary/20 bg-background hover:bg-primary/5 text-primary rounded-xl shadow-xs transition-all duration-200"
         >
           Load More
-        </button>
+        </Button>
+        </div>
+        
       )}
 
       {/* detailed view */}
       {selectedPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col p-6">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-background border broder-gray-100 rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
             {/* modal header */}
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold">{selectedPrompt.task}</h2>
+            <div className="flex justify-between items-start mb-4 border-b border-primary/20">
+              <div className="space-y-1">
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                  Prompt Details
+                </span>
+                <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-gray-900 mt-1">
+                  {selectedPrompt.task}
+                </h2>
+              </div>
+
               <button
                 onClick={() => setSelectedPrompt(null)}
-                className="text-gray-500 hover:text-black"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50 transition-colors text-lg font-medium"
+                aria-label="Close modal"
               >
                 X
               </button>
             </div>
 
             {/* modal body */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-sm my-4 text-justify">
-              <div>
-                <strong>Persona: </strong>
-                {selectedPrompt.persona}
+            <div className="flex-1 overflow-y-auto pr-1 my-4 space-y-2 text-sm text-gray-700 leading-relaxed">
+              {/* metadata grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Persona
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt.persona}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Context
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt.context}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Task
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt.task}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Output
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt.output}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Constraints
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt.constraints}
+                  </p>
+                </div>
               </div>
-              <div>
-                <strong>Context: </strong>
-                {selectedPrompt.context}
-              </div>
-              <div>
-                <strong>Task: </strong>
-                {selectedPrompt.task}
-              </div>
-              <div>
-                <strong>Output: </strong>
-                {selectedPrompt.output}
-              </div>
-              <div>
-                <strong>Constraints: </strong>
-                {selectedPrompt.constraints}
-              </div>
-              <div className="p-3 bg-gray-50 rounded border text-justify">
-                <strong>Prompt: </strong>
-                <p className="mt-2 whitespace-pre-wrap">
+
+              {/* prompt */}
+              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-1.5">
+                <span className="font-bold uppercase tracking-wider text-[10px] text-primary block">
+                  Generated Prompt
+                </span>
+                <p className="text-sm text-gray-900 font-mono leading-relaxed whitespace-pre-wrap select-all">
                   {selectedPrompt.prompt}
                 </p>
               </div>
             </div>
 
             {/* modal footer - actions */}
-            <div className="mt-6 flex flex-wrap justify-center gap-2 pt-4 border-t">
-              <button
-                onClick={() => handleToggleFavourite(selectedPrompt.uid)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  selectedPrompt.isFavourite
-                    ? "bg-yellow-400 text-white hover:bg-yellow-500"
-                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                {selectedPrompt.isFavourite ? "★ Favourited" : "☆ Favourite"}
-              </button>
-              <button
-                onClick={() => {
-                  const formDataForStorage = {
-                    persona: selectedPrompt.persona,
-                    context: selectedPrompt.context,
-                    task: selectedPrompt.task,
-                    output: selectedPrompt.output,
-                    constraint: selectedPrompt.constraints,
-                  };
+            <div className="mt-2 pt-4 border-t border-gray-100 grid grid-cols-2 gap-2 sm:flex sm:justify-around sm:items-center">
+              {/* left side */}
+              <div className="grid grid-cols-2 gap-2 col-span-2 sm:flex sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => handleToggleFavourite(selectedPrompt.uid)}
+                  className={`flex items-center gap-2 w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide transition-colors ${
+                    selectedPrompt.isFavourite
+                      ? "bg-amber-50 border-amber-200/60 text-amber-700 hover:bg-amber-100/70"
+                      : ""
+                  }`}
+                >
+                  {selectedPrompt.isFavourite ? "★ Favourited" : "☆ Favourite"}
+                </Button>
 
-                  localStorage.setItem("pentagram_form", JSON.stringify(formDataForStorage));
+                <Button
+                  variant="outline"
+                  onClick={() => handleDuplicate(selectedPrompt)}
+                  className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide"
+                >
+                  Duplicate
+                </Button>
+              </div>
 
-                  dispatch(setEntireForm(selectedPrompt));
-                  router.push("/home");
-                }}
-                className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDuplicate(selectedPrompt)}
-                className="px-3 py-1 bg-green-100 text-green-700 rounded"
-              >
-                Duplicate
-              </button>
-              <button
-                onClick={() => handleDelete(selectedPrompt.uid)}
-                className="px-3 py-1 bg-red-100 text-red-700 rounded"
-              >
-                Delete
-              </button>
+              {/* right side */}
+              <div className="grid grid-cols-2 gap-2 col-span-2 mt-1 sm:mt-0 sm:flex sm:w-auto">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(selectedPrompt.uid)}
+                  className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide"
+                >
+                  Delete
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    const formDataForStorage = {
+                      persona: selectedPrompt.persona,
+                      context: selectedPrompt.context,
+                      task: selectedPrompt.task,
+                      output: selectedPrompt.output,
+                      constraint: selectedPrompt.constraints,
+                    };
+
+                    localStorage.setItem(
+                      "pentagram_form",
+                      JSON.stringify(formDataForStorage),
+                    );
+
+                    dispatch(setEntireForm(selectedPrompt));
+                    router.push("/home");
+                  }}
+                  className="w-full sm:w-auto bg-primary/70 hover:bg-primary h-10 px-6 rounded-xl text-xs font-semibold tracking-wide shadow-xs"
+                >
+                  Edit
+                </Button>
+              </div>
             </div>
           </div>
         </div>
