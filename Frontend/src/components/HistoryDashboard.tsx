@@ -2,7 +2,13 @@ import ScoreTrendCard from "@/components/ScoreTrendCard";
 import { mockScoredHistory } from "@/app/utils/mockData";
 import AnalyticsCard from "./AnalyticsCard";
 
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
+
 export default function HistoryDashboard() {
+
+  const user = useSelector((state: RootState) => state.auth.user);
+
   return (
     <div className="grid sm:grid-cols-2 items-center p-4 rounded-2xl bg-linear-to-bl from-gray-50 to-primary/50 shadow-md">
       <header className="flex justify-center">

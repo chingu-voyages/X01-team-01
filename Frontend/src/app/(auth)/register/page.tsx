@@ -1,63 +1,75 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signUp, db, storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
+
+import { signInWithGoogle, db } from "@/lib/firebase";
+
+import { doc, setDoc, getDoc } from "firebase/firestore";
+
 import { useAppDispatch } from "@/redux/hooks";
+import type { User } from "@/redux/features/authslice";
 import { setUser } from "@/redux/features/authslice";
 
 export default function RegisterPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  const handleGoogleSignIn = async () => {
     setLoading(true);
+    setError("");
 
     try {
-      if (!file) {
-        throw new Error("Please upload a profile picture");
+      // 1. Google Auth
+      const result = await signInWithGoogle();
+      const firebaseUser = result.user;
+
+      const providerData = firebaseUser.providerData.find(
+        (p) => p.providerId === "google.com"
+      );
+
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const userSnap = await getDoc(userRef);
+
+      let userData: User;
+
+      if (!userSnap.exists()) {
+        // NEW USER → create profile
+        userData = {
+          id: firebaseUser.uid,
+          oauth_provider: "google",
+          oauth_provider_id: providerData?.uid || firebaseUser.uid,
+          display_name: firebaseUser.displayName || "",
+          avatar_url: firebaseUser.photoURL || null,
+          email: firebaseUser.email || "",
+          created_at: new Date().toISOString(),
+          last_login_at: new Date().toISOString(),
+        };
+
+        await setDoc(userRef, userData);
+      } else {
+        // EXISTING USER → update last login
+        const existing = userSnap.data() as User;
+
+        userData = {
+          ...existing,
+          last_login_at: new Date().toISOString(),
+        };
+
+        await setDoc(userRef, userData);
       }
 
-      // 1. Create auth user
-      const userCredential = await signUp(email, password);
-      const user = userCredential.user;
-
-      // 2. Upload profile image
-      const imageRef = ref(storage, `profilePictures/${user.uid}`);
-      await uploadBytes(imageRef, file);
-
-      const photoURL = await getDownloadURL(imageRef);
-
-      // 3. Save to Firestore
-      const userData = {
-        uid: user.uid,
-        name,
-        email,
-        photoURL,
-        createdAt: new Date().toISOString(),
-      };
-
-      await setDoc(doc(db, "users", user.uid), userData);
-
-      // 4. Save to Redux (IMPORTANT FIX)
+      // 3. Redux
       dispatch(setUser(userData));
 
-      // 5. Redirect
+      // 4. Redirect
       router.push("/home");
+
     } catch (err: any) {
-      setError(err.message || "Registration failed");
+      setError(err.message || "Google sign in failed");
     } finally {
       setLoading(false);
     }
@@ -65,50 +77,23 @@ export default function RegisterPage() {
 
   return (
     <div className="container py-10">
-      <h1 className="text-2xl font-semibold mb-4">Register</h1>
+      <h1 className="text-2xl font-semibold mb-4">
+        Continue with Google
+      </h1>
 
-      <form onSubmit={handleRegister} className="flex flex-col gap-3 max-w-sm">
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="border p-2 rounded"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+      <button
+        onClick={handleGoogleSignIn}
+        disabled={loading}
+        className="bg-black text-white p-3 rounded"
+      >
+        {loading ? "Signing in..." : "Continue with Google"}
+      </button>
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="border p-2 rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="border p-2 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <input
-          type="file"
-          accept="image/*"
-          className="border p-2 rounded"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-black text-white p-2 rounded"
-        >
-          {loading ? "Creating account..." : "Register"}
-        </button>
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-      </form>
+      {error && (
+        <p className="text-red-500 text-sm mt-3">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
