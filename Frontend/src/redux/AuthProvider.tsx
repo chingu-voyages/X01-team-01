@@ -54,6 +54,7 @@ export default function AuthProvider({
             last_login_at: user.metadata.lastSignInTime
               ? new Date(user.metadata.lastSignInTime).toISOString()
               : "",
+
           })
         );
 
