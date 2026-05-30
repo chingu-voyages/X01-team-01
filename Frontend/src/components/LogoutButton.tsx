@@ -4,22 +4,40 @@ import { Button } from "./ui/button";
 import { logout } from "@/lib/firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { clearUser } from "@/redux/features/authslice";
-import { useRouter } from "next/navigation";
 import type { RootState } from "@/redux/store";
+import { useRouter } from "next/navigation";
+import { usePentagram } from "@/redux/hooks/usePentagram";
+
+const PENTAGRAM_STORAGE_KEY = "pentagram_form";
 
 export default function LogoutButton() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { clearAll } = usePentagram();
 
   const user = useSelector((state: RootState) => state.auth.user);
 
   const handleLogout = async () => {
     try {
+      // 1. Firebase logout
       await logout();
+
+      // 2. Clear auth state
       dispatch(clearUser());
+
+      // 3. CRITICAL: clear form redux state (this fixes “ghost prompt” bug)
+      clearAll();
+
+      // 4. Clear local cache
+      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
+
+      // 5. Force navigation
       router.push("/login");
+
+      // 6. Optional but powerful: hard session reset signal
+      window.dispatchEvent(new Event("auth:logout"));
     } catch (error) {
-      console.error(error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -29,22 +47,14 @@ export default function LogoutButton() {
 
   if (!user) {
     return (
-      <Button
-        variant="outline"
-        className="w-20"
-        onClick={handleLogin}
-      >
+      <Button variant="outline" className="w-20" onClick={handleLogin}>
         Sign in
       </Button>
     );
   }
 
   return (
-    <Button
-      variant="outline"
-      className="w-20"
-      onClick={handleLogout}
-    >
+    <Button variant="outline" className="w-20" onClick={handleLogout}>
       Log out
     </Button>
   );
