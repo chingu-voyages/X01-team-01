@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Prompt } from "@/types/history";
-import fetchMockHistory from "@/app/utils/historyHelpers";
+import fetchHistory from "@/app/utils/historyHelpers";
 
 export const useHistory = (initialData: Prompt[]) => {
   const [visiblePrompts, setVisiblePrompts] = useState<Prompt[]>([]);
@@ -14,7 +14,7 @@ export const useHistory = (initialData: Prompt[]) => {
 
   useEffect(() => {
     const { data, hasMore: moreAvailable } =
-      fetchMockHistory(stableData, 0);
+      fetchHistory(stableData, 0);
 
     setVisiblePrompts(data);
     setOffset(3);
@@ -23,7 +23,7 @@ export const useHistory = (initialData: Prompt[]) => {
 
   function loadMore() {
     const { data, hasMore: moreAvailable } =
-      fetchMockHistory(stableData, offset);
+      fetchHistory(stableData, offset);
 
     setVisiblePrompts((prev) => [...prev, ...data]);
     setOffset((prev) => prev + 3);

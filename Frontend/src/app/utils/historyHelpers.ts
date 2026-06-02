@@ -5,7 +5,7 @@ interface FetchHistoryResponse {
   hasMore: boolean;
 }
 
-export default function fetchMockHistory(
+export default function fetchHistory(
   allData: Prompt[],
   offset: number,
   limit: number = 3
