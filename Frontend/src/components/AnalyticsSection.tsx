@@ -7,12 +7,51 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAppSelector } from "@/redux/hooks";
 
 export default function AnalyticsSection() {
   //default is open as requested by PO
   const [isOpen, setIsOpen] = useState(true);
   //track whether localStorage was read - to prevent layout shift
   const [hasMounted, setHasMounted] = useState(false);
+
+  const user = useAppSelector((state) => state.auth.user);
+
+  const [analytics, setAnalytics] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAnalytics() {
+      if (!user) return;
+
+      try {
+        const ref = doc(db, "analytics", user.id);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          setAnalytics(snap.data());
+        }
+      } catch (err) {
+        console.error("Failed to load analytics:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAnalytics();
+  }, [user]);
+
+  const successRate =
+    analytics?.total_requests
+      ? (analytics.successful_requests / analytics.total_requests) * 100
+      : 0;
+
+  const avgResponseTime =
+    analytics?.total_requests
+      ? analytics.total_response_time_ms / analytics.total_requests / 1000
+      : 0;
 
   //check if there is a user preference
   useEffect(() => {
@@ -72,17 +111,23 @@ export default function AnalyticsSection() {
           <div className="grid sm:grid-cols-3 gap-4">
             <AnalyticsCard
               title="Gemini success rate"
-              value={96}
+              value={analytics ? Number(successRate.toFixed(1)) : 0}
               suffix="%"
-              hasData
+              hasData={!!analytics}
             />
+
             <AnalyticsCard
               title="Average response time"
-              value={9.7}
-              suffix="seconds"
-              hasData
+              value={analytics ? Number(avgResponseTime.toFixed(2)) : 0}
+              suffix="s"
+              hasData={!!analytics}
             />
-            <AnalyticsCard title="Prompts built" value={381} hasData={false} />
+
+            <AnalyticsCard
+              title="Prompts built"
+              value={analytics?.total_requests || 0}
+              hasData={!!analytics}
+            />
           </div>
         </CollapsibleContent>
       </Collapsible>

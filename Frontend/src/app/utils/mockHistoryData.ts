@@ -1,6 +1,6 @@
 import { Prompt } from "@/types/history";
 
-export const mockHistoryData: Prompt[] = [
+export const mockHistoryData: Prompt[] = [/*
   {
     uid: "hist-001",
     date: "16 May 2026",
@@ -231,4 +231,4 @@ export const mockHistoryData: Prompt[] = [
     },
     isFavourite: false,
   },
-];
+*/];

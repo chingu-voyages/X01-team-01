@@ -23,11 +23,13 @@ export default function PromptCard({
         }}
         className="absolute top-4 right-4 text-xl hover:scale-110 transition-transform"
       >
-        {data.isFavourite ? "★" : "☆"}
+        {data.favorite ? "★" : "☆"}
       </button>
-      <div className="text-xs pb-4">{data.date}</div>
-      <div className="text-base pb-2 font-semibold">{data.task}</div>
-      <div className="text-sm line-clamp-3">{data.prompt}</div>
+      <div className="text-xs pb-4">
+        {new Date(data.created_at.seconds * 1000).toLocaleDateString()}
+      </div>
+      <div className="text-base pb-2 font-semibold">{data.title}</div>
+      <div className="text-sm line-clamp-3">{data.gemini_result}</div>
     </article>
   );
 }

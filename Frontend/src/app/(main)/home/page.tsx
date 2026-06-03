@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
 import { useAppSelector } from "@/redux/hooks";
 import Link from "next/link";
-import {getFirestore, collection, addDoc,serverTimestamp,doc,setDoc,updateDoc, query, where, getDocs, limit,} from "firebase/firestore";
+import {getFirestore, collection, addDoc,serverTimestamp,doc,setDoc,updateDoc,getDoc, query, where, getDocs, limit,increment} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function Home() {
@@ -67,6 +67,8 @@ export default function Home() {
   const [draftReady, setDraftReady] = useState(false);
 
   const hasInitializedRef = useRef(false);
+
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   //current user status
   const status = useAppSelector((state) => state.auth.status);
@@ -149,6 +151,8 @@ export default function Home() {
 
       reset(parsed);
       persistFormToRedux(parsed);
+
+      setResult(parsed.gemini_result || null);
     }
 
     setHasHydrated(true);
@@ -196,6 +200,31 @@ export default function Home() {
     resetAnalysisPanels(); // resets panels (score and evaluation panels etc..)
 
     persistFormToRedux(formData);
+
+    //Logic-for-analytics
+    const startTime = Date.now();
+
+    async function markSuccess(durationMs: number) {
+      if (!user) return;
+
+      await updateDoc(doc(db, "analytics", user.id), {
+        successful_requests: increment(1),
+        total_requests: increment(1),
+        total_response_time_ms: increment(durationMs),
+        updated_at: serverTimestamp(),
+      });
+    }
+
+    async function markFailure(durationMs: number) {
+      if (!user) return;
+
+      await updateDoc(doc(db, "analytics", user.id), {
+        failed_requests: increment(1),
+        total_requests: increment(1),
+        total_response_time_ms: increment(durationMs),
+        updated_at: serverTimestamp(),
+      });
+    }
 
     // --- DEMO MODE ---
 
@@ -245,6 +274,9 @@ export default function Home() {
       const result = await res.json();
       setResult(result.text);
 
+      //Updates-analytics-on-success
+      await markSuccess(Date.now() - startTime);
+
       if (currentDraftId) {
         await updateDoc(doc(db, "prompt_drafts", currentDraftId), {
           gemini_result: result.text,
@@ -253,11 +285,23 @@ export default function Home() {
       }
 
     } catch (err: any) {
+
+      const duration = Date.now() - startTime;
+
+      //Updates-analytics-on-fail
+      try {
+        await markFailure(duration);
+      } catch (e) {
+        console.error("Analytics failure tracking failed:", e);
+      }
+
       if (err.name === "AbortError") {
         setError("Request timed out. Please try again.");
       } else {
         setError("Something went wrong. Please try again.");
       }
+
+
     } finally {
       clearTimeout(timeout);
       setIsLoading(false);
@@ -515,85 +559,134 @@ export default function Home() {
   useEffect(() => {
       if (!user) return;
 
-      async function initializeDraft() {
-        if (hasInitializedRef.current) return;
-          hasInitializedRef.current = true;
+     async function initializeDraft() {
+      if (hasInitializedRef.current) return;
+      hasInitializedRef.current = true;
 
-        try {
-          const q = query(
+      try {
+        // ==========================
+        // ANALYTICS INITIALIZATION
+        // ==========================
+        const analyticsRef = doc(db, "analytics", user!.id);
+
+        const analyticsSnap = await getDoc(analyticsRef);
+
+        if (!analyticsSnap.exists()) {
+          await setDoc(analyticsRef, {
+            user_id: user!.id,
+
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+
+            total_requests: 0,
+            successful_requests: 0,
+            failed_requests: 0,
+            total_response_time_ms: 0,
+          });
+        }
+
+        // ==========================
+        // DRAFT INITIALIZATION
+        // ==========================
+        const q = query(
+          collection(db, "prompt_drafts"),
+          where("user_id", "==", user?.id),
+          where("current_doc", "==", true),
+          limit(1)
+        );
+
+        const snapshot = await getDocs(q);
+
+        // USER HAS NO DRAFTS
+        if (snapshot.empty) {
+          const newDraft = await addDoc(
             collection(db, "prompt_drafts"),
-            where("user_id", "==", user?.id),
-            where("current_doc", "==", true),
-            limit(1)
+            {
+              user_id: user?.id,
+
+              created_at: serverTimestamp(),
+
+              updated_at: serverTimestamp(),
+
+              title: "Untitled Prompt",
+
+              fields: {
+                persona: "",
+                context: "",
+                task: "",
+                output: "",
+                constraint: "",
+              },
+
+              score: {
+                clarity: null,
+                specificity: null,
+                format_guidance: null,
+                overall: null,
+              },
+
+              gemini_result: "",
+
+              favorite: false,
+
+              words: 0,
+
+              current_doc: true,
+            }
           );
 
-          const snapshot = await getDocs(q);
+          await updateDoc(newDraft, {
+            id: newDraft.id,
+          });
 
-          // USER HAS NO DRAFTS
-          if (snapshot.empty) {
-            const newDraft = await addDoc(
-              collection(db, "prompt_drafts"),
-              {
-                user_id: user?.id,
-
-                created_at: serverTimestamp(),
-
-                updated_at: serverTimestamp(),
-
-                title: "Untitled Prompt",
-
-                fields: {
-                  persona: "",
-                  context: "",
-                  task: "",
-                  output: "",
-                  constraint: "",
-                },
-
-                score: {
-                  clarity: null,
-                  specificity: null,
-                  format_guidance: null,
-                  overall: null,
-                },
-
-                gemini_result: "",
-
-                favorite: false,
-
-                words: 0,
-
-                current_doc: true,
-              }
-            );
-
-            // add document id into firestore document itself
-            await updateDoc(newDraft, {
-              id: newDraft.id,
-            });
-
-            setCurrentDraftId(newDraft.id);
-            setDraftReady(true);
-          }
-
-          // USER ALREADY HAS DRAFTS
-          else {
-            const existingDraft = snapshot.docs[0];
-
-            setCurrentDraftId(existingDraft.id);
-            setDraftReady(true);
-
-            const data = existingDraft.data();
-
-            if (data.fields) {
-              reset(data.fields);
-              persistFormToRedux(data.fields);
-            }
-          }
-        } catch (err) {
-          console.error("Draft initialization failed:", err);
+          setCurrentDraftId(newDraft.id);
+          setDraftReady(true);
         }
+
+        // USER ALREADY HAS DRAFTS
+        else {
+          const existingDraft = snapshot.docs[0];
+
+          setCurrentDraftId(existingDraft.id);
+          setDraftReady(true);
+
+          const data = existingDraft.data();
+
+          if (data.fields) {
+            reset(data.fields);
+            persistFormToRedux(data.fields);
+          }
+
+          setResult(data.gemini_result || null);
+
+          if (data.score?.overall != null) {
+            setScores({
+              global_scores: {
+                clarity: data.score.clarity ?? 0,
+                specificity: data.score.specificity ?? 0,
+                format_guidance: data.score.format_guidance ?? 0,
+              },
+              overall: data.score.overall ?? 0,
+              field_grades: {
+                persona: 0,
+                context: 0,
+                task: 0,
+                output: 0,
+                constraint: 0,
+              },
+              weakest_field: "task",
+              suggestion: null,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Draft initialization failed:", err);
+
+        setSaveError(
+          "Your result is displayed but could not be saved. Please export or copy it now."
+        );
       }
+    }
 
       initializeDraft();
     }, [user]);
@@ -610,7 +703,7 @@ export default function Home() {
 
           user_id: user.id,
 
-          title: formData.task.slice(0, 80) || "Untitled Prompt",
+          title: formData.task || "Untitled Prompt",
 
           timestamp: serverTimestamp(),
 
@@ -640,7 +733,7 @@ export default function Home() {
         { merge: true }
       );
     } catch (err) {
-      console.error("Failed to save prompt draft:", err);
+      console.error("Unable to save. Please try again. ", err);
     }
   }
 
@@ -930,6 +1023,12 @@ async function handleCreateNewDraft() {
             >
               Retry
             </button>
+          </div>
+        )}
+
+        {saveError && (
+          <div className="mt-4 p-4 border rounded bg-yellow-50 text-yellow-700">
+            {saveError}
           </div>
         )}
 
