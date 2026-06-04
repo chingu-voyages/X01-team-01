@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import EvaluationSkeleton from "./EvaluationSkeleton";
+import ResultSkeleton from "./ResultSkeleton";
 
 type Evaluation = {
   completeness: "Fully answered" | "Partially answered" | "Did not answer";
@@ -31,7 +31,7 @@ export default function EvaluationPanel({
   onUseFollowUp,
 }: Props) {
   if (isEvaluating) {
-    return <EvaluationSkeleton />;
+    return <ResultSkeleton />;
   }
 
   if (error) {

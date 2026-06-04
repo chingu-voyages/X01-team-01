@@ -1,25 +1,24 @@
 "use client";
 import FormSection from "@/components/FormSection";
 import ResultSkeleton from "@/components/ResultSkeleton";
-import EvaluationSkeleton from "@/components/EvaluationSkeleton";
 import EvaluationPanel from "@/components/EvaluationPanel";
 // import ResponseCard from "@/components/ResponseCard";
 import SubmitButton from "@/components/SubmitButton";
+import ComparisonModal from "@/components/ComparisonModal";
+import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
+import { Button } from "@/components/ui/button";
+import {
+  ScoringResponse,
+  shouldShowSuggestion,
+} from "@/app/utils/scoringUtils";
 import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
-import {
-  ScoringResponse,
-  shouldShowSuggestion,
-} from "@/app/utils/scoringUtils";
-import { Button } from "@/components/ui/button";
 import { usePentagram } from "@/redux/hooks/usePentagram";
-import ComparisonModal from "@/components/ComparisonModal";
-import { toast } from "sonner";
-import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
 import { useAppSelector } from "@/redux/hooks";
+import { toast } from "sonner";
 import Link from "next/link";
 import {
   getFirestore,
@@ -1098,7 +1097,7 @@ export default function Home() {
             </div>
           </div>
         )}
-        
+
         {/* SUGGESTED IMPROVEMENT */}
         {scores && (
           <div className="mt-4 p-6 border-l-4 border-primary rounded-xl shadow-sm bg-secondary/50">
