@@ -34,7 +34,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary: #19BD71;
+  --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -222,7 +222,10 @@
   }
 }
 
-body {
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   position: relative;
   overflow-x: hidden;
 }
