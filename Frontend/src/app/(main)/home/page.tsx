@@ -21,9 +21,24 @@ import { toast } from "sonner";
 import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
 import { useAppSelector } from "@/redux/hooks";
 import Link from "next/link";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  query,
+  where,
+  getDocs,
+  limit,
+  increment,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function Home() {
-  // const user = useAppSelector((state) => state.auth.user);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +67,21 @@ export default function Home() {
       constraint: "",
     },
   });
+
+  //firestore
+  const user = useAppSelector((state) => state.auth.user);
+
+  const promptsCollection = collection(db, "prompts");
+
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+
+  const [draftReady, setDraftReady] = useState(false);
+
+  const hasInitializedRef = useRef(false);
+
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   //current user status
   const status = useAppSelector((state) => state.auth.status);
@@ -125,6 +155,8 @@ export default function Home() {
 
   //Needed for redux rehydration so EvaluationButton doesnt think prompt fields are empty when they arn'tw
   useEffect(() => {
+    if (!user) return; // IMPORTANT: don't load drafts without a user
+
     const saved = localStorage.getItem(PENTAGRAM_STORAGE_KEY);
 
     if (saved) {
@@ -132,10 +164,12 @@ export default function Home() {
 
       reset(parsed);
       persistFormToRedux(parsed);
+
+      setResult(parsed.gemini_result || null);
     }
 
     setHasHydrated(true);
-  }, [reset]);
+  }, [reset, user]);
 
   //Helper function that centralizes redux writes so redux is updated on save only
   function persistFormToRedux(formData: Record<FieldId, string>) {
@@ -179,6 +213,31 @@ export default function Home() {
     resetAnalysisPanels(); // resets panels (score and evaluation panels etc..)
 
     persistFormToRedux(formData);
+
+    //Logic-for-analytics
+    const startTime = Date.now();
+
+    async function markSuccess(durationMs: number) {
+      if (!user) return;
+
+      await updateDoc(doc(db, "analytics", user.id), {
+        successful_requests: increment(1),
+        total_requests: increment(1),
+        total_response_time_ms: increment(durationMs),
+        updated_at: serverTimestamp(),
+      });
+    }
+
+    async function markFailure(durationMs: number) {
+      if (!user) return;
+
+      await updateDoc(doc(db, "analytics", user.id), {
+        failed_requests: increment(1),
+        total_requests: increment(1),
+        total_response_time_ms: increment(durationMs),
+        updated_at: serverTimestamp(),
+      });
+    }
 
     // --- DEMO MODE ---
 
@@ -227,7 +286,26 @@ export default function Home() {
 
       const result = await res.json();
       setResult(result.text);
+
+      //Updates-analytics-on-success
+      await markSuccess(Date.now() - startTime);
+
+      if (currentDraftId) {
+        await updateDoc(doc(db, "prompt_drafts", currentDraftId), {
+          gemini_result: result.text,
+          updated_at: serverTimestamp(),
+        });
+      }
     } catch (err: any) {
+      const duration = Date.now() - startTime;
+
+      //Updates-analytics-on-fail
+      try {
+        await markFailure(duration);
+      } catch (e) {
+        console.error("Analytics failure tracking failed:", e);
+      }
+
       if (err.name === "AbortError") {
         setError("Request timed out. Please try again.");
       } else {
@@ -319,6 +397,19 @@ export default function Home() {
       setScores(result);
       setLastScoredValues(values);
       //setHasChangedSinceScore(false);
+
+      // 🔥 SAVE SCORES TO FIRESTORE HERE
+      if (currentDraftId) {
+        await updateDoc(doc(db, "prompt_drafts", currentDraftId), {
+          score: {
+            clarity: result.global_scores.clarity,
+            specificity: result.global_scores.specificity,
+            format_guidance: result.global_scores.format_guidance,
+            overall: result.overall,
+          },
+          updated_at: serverTimestamp(),
+        });
+      }
     } catch (err) {
       console.error("Scoring error:", err);
       setScoreError("Unable to score your prompt. Please try again.");
@@ -470,8 +561,209 @@ export default function Home() {
     setLastScoredValues(null);
   }
 
+  //logic-for-checking-if-user-has-any-documents
   useEffect(() => {
+    if (!user) return;
+
+    async function initializeDraft() {
+      if (hasInitializedRef.current) return;
+      hasInitializedRef.current = true;
+
+      try {
+        // ==========================
+        // ANALYTICS INITIALIZATION
+        // ==========================
+        const analyticsRef = doc(db, "analytics", user!.id);
+
+        const analyticsSnap = await getDoc(analyticsRef);
+
+        if (!analyticsSnap.exists()) {
+          await setDoc(analyticsRef, {
+            user_id: user!.id,
+
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+
+            total_requests: 0,
+            successful_requests: 0,
+            failed_requests: 0,
+            total_response_time_ms: 0,
+          });
+        }
+
+        // ==========================
+        // DRAFT INITIALIZATION
+        // ==========================
+        const q = query(
+          collection(db, "prompt_drafts"),
+          where("user_id", "==", user?.id),
+          where("current_doc", "==", true),
+          limit(1),
+        );
+
+        const snapshot = await getDocs(q);
+
+        // USER HAS NO DRAFTS
+        if (snapshot.empty) {
+          const newDraft = await addDoc(collection(db, "prompt_drafts"), {
+            user_id: user?.id,
+
+            created_at: serverTimestamp(),
+
+            updated_at: serverTimestamp(),
+
+            title: "Untitled Prompt",
+
+            fields: {
+              persona: "",
+              context: "",
+              task: "",
+              output: "",
+              constraint: "",
+            },
+
+            score: {
+              clarity: null,
+              specificity: null,
+              format_guidance: null,
+              overall: null,
+            },
+
+            gemini_result: "",
+
+            favorite: false,
+
+            words: 0,
+
+            current_doc: true,
+          });
+
+          await updateDoc(newDraft, {
+            id: newDraft.id,
+          });
+
+          setCurrentDraftId(newDraft.id);
+          setDraftReady(true);
+        }
+
+        // USER ALREADY HAS DRAFTS
+        else {
+          const existingDraft = snapshot.docs[0];
+
+          setCurrentDraftId(existingDraft.id);
+          setDraftReady(true);
+
+          const data = existingDraft.data();
+
+          if (data.fields) {
+            reset(data.fields);
+            persistFormToRedux(data.fields);
+          }
+
+          setResult(data.gemini_result || null);
+
+          if (data.score?.overall != null) {
+            setScores({
+              global_scores: {
+                clarity: data.score.clarity ?? 0,
+                specificity: data.score.specificity ?? 0,
+                format_guidance: data.score.format_guidance ?? 0,
+              },
+              overall: data.score.overall ?? 0,
+              field_grades: {
+                persona: 0,
+                context: 0,
+                task: 0,
+                output: 0,
+                constraint: 0,
+              },
+              weakest_field: "task",
+              suggestion: null,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Draft initialization failed:", err);
+
+        setSaveError(
+          "Your result is displayed but could not be saved. Please export or copy it now.",
+        );
+      }
+    }
+
+    initializeDraft();
+  }, [user]);
+
+  //firestore-document
+  async function savePromptDraft(formData: Record<FieldId, string>) {
+    if (!user || !currentDraftId) return;
+
+    try {
+      await setDoc(
+        doc(db, "prompt_drafts", currentDraftId),
+        {
+          id: currentDraftId,
+
+          user_id: user.id,
+
+          title: formData.task || "Untitled Prompt",
+
+          timestamp: serverTimestamp(),
+
+          fields: {
+            persona: formData.persona,
+            context: formData.context,
+            task: formData.task,
+            output: formData.output,
+            constraint: formData.constraint,
+          },
+
+          score: {
+            clarity: scores?.global_scores?.clarity ?? null,
+            specificity: scores?.global_scores?.specificity ?? null,
+            format_guidance: scores?.global_scores?.format_guidance ?? null,
+            overall: scores?.overall ?? null,
+          },
+
+          gemini_result: result || "",
+
+          favorite: false,
+
+          words: result ? result.trim().split(/\s+/).length : 0,
+
+          current_doc: true,
+        },
+        { merge: true },
+      );
+    } catch (err) {
+      console.error("Unable to save. Please try again. ", err);
+    }
+  }
+
+  //resers-prompt-fields-on-new-user-login
+  useEffect(() => {
+    if (!user) {
+      reset({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
+
+      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
+    }
+  }, [user]);
+
+  function isEmptyPrompt(data: Record<FieldId, string>) {
+    return Object.values(data).every((v) => !v || v.trim() === "");
+  }
+
+  //allows-for-automatic-saves
+  useEffect(() => {
+    if (!draftReady) return;
     if (!hasHydrated) return;
+    if (!user || !currentDraftId) return;
 
     const data = {
       persona: watchedPersona,
@@ -479,17 +771,109 @@ export default function Home() {
       task: watchedTask,
       output: watchedOutput,
       constraint: watchedConstraint,
+      gemini_result: result,
     };
 
     localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      if (isEmptyPrompt(data)) return;
+      savePromptDraft(data);
+    }, 800);
   }, [
     hasHydrated,
+    user,
     watchedPersona,
     watchedContext,
     watchedTask,
     watchedOutput,
     watchedConstraint,
+    result,
   ]);
+
+  //CREATE-A-NEW-DOCUMENT
+  async function handleCreateNewDraft() {
+    if (!user) return;
+
+    try {
+      const q = query(
+        collection(db, "prompt_drafts"),
+        where("user_id", "==", user.id),
+      );
+
+      const snapshot = await getDocs(q);
+
+      await Promise.all(
+        snapshot.docs.map((d) =>
+          updateDoc(d.ref, {
+            current_doc: false,
+            updated_at: serverTimestamp(),
+          }),
+        ),
+      );
+
+      const newDraftRef = await addDoc(collection(db, "prompt_drafts"), {
+        user_id: user.id,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+        title: "Untitled Prompt",
+        fields: {
+          persona: "",
+          context: "",
+          task: "",
+          output: "",
+          constraint: "",
+        },
+        score: {
+          clarity: null,
+          specificity: null,
+          format_guidance: null,
+          overall: null,
+        },
+        gemini_result: "",
+        favorite: false,
+        words: 0,
+        current_doc: true,
+      });
+
+      await updateDoc(newDraftRef, { id: newDraftRef.id });
+
+      setCurrentDraftId(newDraftRef.id);
+
+      // 🔥 1. RESET FORM
+      reset({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
+
+      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
+      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
+
+      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
+      persistFormToRedux({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
+
+      // 🔥 4. CLEAR UI STATE
+      resetAnalysisPanels();
+
+      toast.success("New draft created");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to create new draft");
+    }
+  }
 
   return (
     <>
@@ -512,6 +896,14 @@ export default function Home() {
             using the Pentagram framework.
           </p>
         </div>
+
+        <Button
+          variant="secondary"
+          className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+          onClick={handleCreateNewDraft}
+        >
+          New Draft
+        </Button>
 
         {/* only for testing */}
         <div className="flex gap-4">
@@ -698,6 +1090,15 @@ export default function Home() {
           </div>
         )}
 
+        {saveError && (
+          <div className="mt-4 p-4 bg-amber-50/50 border border-amber-200/50 rounded-xl text-xs font-medium text-amber-800 tracking-wide animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">⚠️</span>
+              <p className="leading-relaxed">{saveError}</p>
+            </div>
+          </div>
+        )}
+        
         {/* SUGGESTED IMPROVEMENT */}
         {scores && (
           <div className="mt-4 p-6 border-l-4 border-primary rounded-xl shadow-sm bg-secondary/50">

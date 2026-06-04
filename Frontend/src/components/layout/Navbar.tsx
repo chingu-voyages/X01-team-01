@@ -7,6 +7,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import LogoutButton from "../LogoutButton";
 
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+
 const ITEMS = [
   { label: "Home", href: "/home" },
   { label: "History", href: "/history" },
@@ -15,7 +18,9 @@ const ITEMS = [
 export default function Navbar() {
   const pathname = usePathname();
 
-  const isLoggedIn: boolean = true;
+  const isLoggedIn = useSelector(
+    (state: RootState) => !!state.auth.user
+  );
 
   return (
     <header className="z-50 sticky top-0">

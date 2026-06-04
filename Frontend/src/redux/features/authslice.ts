@@ -1,10 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface User {
-  uid: string;
-  email: string | null;
-  name?: string;
-  photoURL?: string;
+export interface User {
+  id: string;
+
+  oauth_provider: "google" | "github";
+  oauth_provider_id: string;
+
+  display_name: string;
+  avatar_url: string | null;
+
+  email: string;
+
+  created_at: string;
+  last_login_at: string;
+
 }
 
 interface AuthState {
@@ -25,12 +34,15 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.status = action.payload ? "authenticated" : "unauthenticated";
     },
+
     clearUser: (state) => {
       state.user = null;
       state.status = "unauthenticated";
     },
+
     setGuestMode: (state) => {
-      ((state.user = null), (state.status = "guest"));
+      state.user = null;
+      state.status = "guest";
     },
   },
 });

@@ -1,5 +1,5 @@
 import { useHistory } from "@/hooks/useHistory";
-import { Prompt } from "@/types/history";
+import type { Prompt } from "@/types/history";
 import PromptCard from "./PromptCard";
 import Link from "next/link";
 import { useState } from "react";
@@ -7,91 +7,220 @@ import { useDispatch } from "react-redux";
 import { setEntireForm } from "@/redux/features/pentagramSlice";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import {
+  doc,
+  updateDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface HistoryListProps {
   allData: Prompt[];
   onDataChange: (newData: Prompt[]) => void;
   currentView: string | null;
+  searchQuery: string;
 }
 
 export default function HistoryList({
   allData,
   onDataChange,
   currentView,
+  searchQuery,
 }: HistoryListProps) {
   const { visiblePrompts, setVisiblePrompts, loadMore, hasMore } =
     useHistory(allData);
+
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
+
+  console.log("allData FROM FIREBASE:", allData);
+  console.log("visiblePrompts FROM HOOK:", visiblePrompts);
 
   const dispatch = useDispatch();
   const router = useRouter();
 
-  //filter favourites
-  const displayedPrompts = visiblePrompts.filter((item) => {
+  // filter favourites (Firestore version)
+  /*const displayedPrompts = visiblePrompts.filter((item) => {
     if (currentView === "favourites") {
-      return item.isFavourite;
+      return item.favorite;
     }
     return true;
-  });
+  });*/
+  const displayedPrompts = visiblePrompts
+    .filter((item) => {
+      // favourites filter
+      if (currentView === "favourites") {
+        return item.favorite;
+      }
+      return true;
+    })
+    .filter((item) => {
+      // search filter
+      if (!searchQuery.trim()) return true;
 
-  function handleDelete(uid: string) {
-    if (window.confirm("Are you sure you want to delete this prompt?")) {
-      //filter local state to remove the item
+      const q = searchQuery.toLowerCase();
+
+      return (
+        item.title?.toLowerCase().includes(q) ||
+        item.fields?.persona?.toLowerCase().includes(q) ||
+        item.fields?.task?.toLowerCase().includes(q) ||
+        item.fields?.context?.toLowerCase().includes(q) ||
+        item.fields?.output?.toLowerCase().includes(q) ||
+        item.fields?.constraint?.toLowerCase().includes(q) ||
+        item.gemini_result?.toLowerCase().includes(q)
+      );
+    });
+
+  async function handleDelete(uid: string) {
+    if (!window.confirm("Are you sure you want to delete this prompt?")) return;
+
+    try {
+      const deletedPrompt = allData.find((p) => p.uid === uid);
+
+      // 1. Delete from Firestore
+      await deleteDoc(doc(db, "prompt_drafts", uid));
+
+      // 2. Update local state
       setVisiblePrompts((prev) => prev.filter((p) => p.uid !== uid));
 
-      //notify parent of changes
       const updatedMaster = allData.filter((p) => p.uid !== uid);
       onDataChange(updatedMaster);
 
-      //close modal
       setSelectedPrompt(null);
+
+      // 3. If deleted prompt was active, assign new current_doc
+      if (deletedPrompt?.current_doc && updatedMaster.length > 0) {
+        const newCurrent = [...updatedMaster].sort((a, b) => {
+          const aTime =
+            a.updated_at?.seconds ?? new Date(a.updated_at).getTime();
+          const bTime =
+            b.updated_at?.seconds ?? new Date(b.updated_at).getTime();
+
+          return bTime - aTime; // newest first
+        })[0];
+
+        await updateDoc(doc(db, "prompt_drafts", newCurrent.uid), {
+          current_doc: true,
+          updated_at: serverTimestamp(),
+        });
+
+        const finalMaster = updatedMaster.map((p) => ({
+          ...p,
+          current_doc: p.uid === newCurrent.uid,
+        }));
+
+        onDataChange(finalMaster);
+        setVisiblePrompts(finalMaster);
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
     }
   }
 
-  function handleDuplicate(prompt: Prompt) {
-    const duplicatedPrompt: Prompt = {
-      ...prompt,
-      uid: `copy-${Date.now()}`, //unique ID for the copy
-      date: new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }), //the date is "today"
-    };
+  async function handleDuplicate(prompt: Prompt) {
+    try {
+      if (!prompt.user_id) return;
 
-    //duplicate item is added to the top of the list
-    setVisiblePrompts((prev) => [duplicatedPrompt, ...prev]);
+      // 1. Create the duplicate FIRST
+      const newDocRef = await addDoc(collection(db, "prompt_drafts"), {
+        user_id: prompt.user_id,
 
-    //notify parent of change
-    const updatedMaster = [duplicatedPrompt, ...allData];
-    onDataChange(updatedMaster);
+        title: `${prompt.title} (Copy)`,
 
-    //close the modal so the user sees the list
-    setSelectedPrompt(null);
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+
+        fields: { ...prompt.fields },
+
+        score: {
+          clarity: prompt.score?.clarity ?? null,
+          specificity: prompt.score?.specificity ?? null,
+          format_guidance: prompt.score?.format_guidance ?? null,
+          overall: prompt.score?.overall ?? null,
+        },
+
+        gemini_result: prompt.gemini_result || "",
+
+        favorite: false,
+
+        words: prompt.words || 0,
+
+        current_doc: true,
+      });
+
+      await updateDoc(newDocRef, {
+        uid: newDocRef.id,
+      });
+
+      // 2. THEN unset all other current docs
+      const q = query(
+        collection(db, "prompt_drafts"),
+        where("user_id", "==", prompt.user_id),
+      );
+
+      const snapshot = await getDocs(q);
+
+      await Promise.all(
+        snapshot.docs
+          .filter((d) => d.id !== newDocRef.id) // IMPORTANT: don't touch the new one
+          .map((d) =>
+            updateDoc(d.ref, {
+              current_doc: false,
+              updated_at: serverTimestamp(),
+            }),
+          ),
+      );
+
+      // 3. update UI
+      const duplicated: Prompt = {
+        ...prompt,
+        uid: newDocRef.id,
+        title: `${prompt.title} (Copy)`,
+        favorite: false,
+        current_doc: true,
+      };
+
+      setVisiblePrompts((prev) => [duplicated, ...prev]);
+      onDataChange([duplicated, ...allData]);
+      setSelectedPrompt(null);
+    } catch (err) {
+      console.error("Duplicate failed:", err);
+    }
   }
 
-  function handleToggleFavourite(uid: string) {
-    //update list state
+  async function handleToggleFavourite(uid: string) {
+    const newValue = !allData.find((p) => p.uid === uid)?.favorite;
+
+    // 1. update Firestore
+    await updateDoc(doc(db, "prompt_drafts", uid), {
+      favorite: newValue,
+    });
+
+    // 2. update visible state
     setVisiblePrompts((prev) =>
-      prev.map((p) =>
-        p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
-      ),
+      prev.map((p) => (p.uid === uid ? { ...p, favorite: newValue } : p)),
     );
 
-    //notify parent of changes
+    // 3. update master state
     const updatedMaster = allData.map((p) =>
-      p.uid === uid ? { ...p, isFavourite: !p.isFavourite } : p,
+      p.uid === uid ? { ...p, favorite: newValue } : p,
     );
+
     onDataChange(updatedMaster);
 
+    // 4. update modal if open
     if (selectedPrompt?.uid === uid) {
       setSelectedPrompt((prev) =>
-        prev ? { ...prev, isFavourite: !prev.isFavourite } : null,
+        prev ? { ...prev, favorite: newValue } : null,
       );
     }
   }
 
-  //empty state
   if (allData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-gray-50">
@@ -106,7 +235,6 @@ export default function HistoryList({
     );
   }
 
-  //render 3 cards
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
@@ -120,21 +248,18 @@ export default function HistoryList({
         ))}
       </div>
 
-      {/* load 3 more cards */}
       {hasMore && currentView !== "favourites" && (
         <div className="flex justify-center">
           <Button
-          variant="outline"
-          onClick={loadMore}
-          className="w-2xl h-11 mt-6 text-sm font-semibold tracking-wide border-primary/20 bg-background hover:bg-primary/5 text-primary rounded-xl shadow-xs transition-all duration-200"
-        >
-          Load More
-        </Button>
+            variant="outline"
+            onClick={loadMore}
+            className="w-2xl h-11 mt-6 text-sm font-semibold tracking-wide border-primary/20 bg-background hover:bg-primary/5 text-primary rounded-xl shadow-xs transition-all duration-200"
+          >
+            Load More
+          </Button>
         </div>
-        
       )}
 
-      {/* detailed view */}
       {selectedPrompt && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-background border broder-gray-100 rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
@@ -145,7 +270,7 @@ export default function HistoryList({
                   Prompt Details
                 </span>
                 <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-gray-900 mt-1">
-                  {selectedPrompt.task}
+                  {selectedPrompt.title}
                 </h2>
               </div>
 
@@ -167,7 +292,7 @@ export default function HistoryList({
                     Persona
                   </span>
                   <p className="text-gray-800 font-medium">
-                    {selectedPrompt.persona}
+                    {selectedPrompt?.fields.persona}
                   </p>
                 </div>
 
@@ -176,7 +301,7 @@ export default function HistoryList({
                     Context
                   </span>
                   <p className="text-gray-800 font-medium">
-                    {selectedPrompt.context}
+                    {selectedPrompt?.fields.context}
                   </p>
                 </div>
 
@@ -185,7 +310,7 @@ export default function HistoryList({
                     Task
                   </span>
                   <p className="text-gray-800 font-medium">
-                    {selectedPrompt.task}
+                    {selectedPrompt?.fields.task}
                   </p>
                 </div>
 
@@ -194,7 +319,7 @@ export default function HistoryList({
                     Output
                   </span>
                   <p className="text-gray-800 font-medium">
-                    {selectedPrompt.output}
+                    {selectedPrompt?.fields.output}
                   </p>
                 </div>
 
@@ -203,7 +328,7 @@ export default function HistoryList({
                     Constraints
                   </span>
                   <p className="text-gray-800 font-medium">
-                    {selectedPrompt.constraints}
+                    {selectedPrompt?.fields.constraint}
                   </p>
                 </div>
               </div>
@@ -214,7 +339,7 @@ export default function HistoryList({
                   Generated Prompt
                 </span>
                 <p className="text-sm text-gray-900 font-mono leading-relaxed whitespace-pre-wrap select-all">
-                  {selectedPrompt.prompt}
+                  {selectedPrompt?.gemini_result}
                 </p>
               </div>
             </div>
@@ -227,12 +352,12 @@ export default function HistoryList({
                   variant="outline"
                   onClick={() => handleToggleFavourite(selectedPrompt.uid)}
                   className={`flex items-center gap-2 w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide transition-colors ${
-                    selectedPrompt.isFavourite
+                    selectedPrompt?.favorite
                       ? "bg-amber-50 border-amber-200/60 text-amber-700 hover:bg-amber-100/70"
                       : ""
                   }`}
                 >
-                  {selectedPrompt.isFavourite ? "★ Favourited" : "☆ Favourite"}
+                  {selectedPrompt?.favorite ? "★ Favourited" : "☆ Favourite"}
                 </Button>
 
                 <Button
@@ -253,23 +378,44 @@ export default function HistoryList({
                 >
                   Delete
                 </Button>
+
                 <Button
                   variant="default"
-                  onClick={() => {
-                    const formDataForStorage = {
-                      persona: selectedPrompt.persona,
-                      context: selectedPrompt.context,
-                      task: selectedPrompt.task,
-                      output: selectedPrompt.output,
-                      constraint: selectedPrompt.constraints,
-                    };
+                  onClick={async () => {
+                    const selectedId = selectedPrompt.uid;
+
+                    const updates = allData.map(async (p) => {
+                      await updateDoc(doc(db, "prompt_drafts", p.uid), {
+                        current_doc: p.uid === selectedId,
+                      });
+                    });
+
+                    await Promise.all(updates);
+
+                    const updated = allData.map((p) => ({
+                      ...p,
+                      current_doc: p.uid === selectedId,
+                    }));
+
+                    onDataChange(updated);
+
+                    const formDataForStorage = selectedPrompt.fields;
 
                     localStorage.setItem(
                       "pentagram_form",
                       JSON.stringify(formDataForStorage),
                     );
 
-                    dispatch(setEntireForm(selectedPrompt));
+                    dispatch(
+                      setEntireForm({
+                        persona: selectedPrompt.fields.persona,
+                        context: selectedPrompt.fields.context,
+                        task: selectedPrompt.fields.task,
+                        output: selectedPrompt.fields.output,
+                        constraints: selectedPrompt.fields.constraint,
+                      }),
+                    );
+
                     router.push("/home");
                   }}
                   className="w-full sm:w-auto bg-primary/70 hover:bg-primary h-10 px-6 rounded-xl text-xs font-semibold tracking-wide shadow-xs"

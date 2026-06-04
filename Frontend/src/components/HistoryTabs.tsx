@@ -1,11 +1,14 @@
 import { Search, ListFilter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 interface HistoryTabsProps {
   favouritesCount: number;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
 }
 
-export default function HistoryTabs({ favouritesCount }: HistoryTabsProps) {
+export default function HistoryTabs({ favouritesCount, searchQuery, setSearchQuery,}: HistoryTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,19 +32,27 @@ export default function HistoryTabs({ favouritesCount }: HistoryTabsProps) {
           <div
             className={`border-b-2 hover:cursor-pointer transition-all duration-200
                 ${isAllActive ? `text-black border-primary` : `text-black/40 border-transparent hover:text-black`}`}
-            onClick={() => router.push("/history")}
+            onClick={() => router.push("/history", { scroll: false })}
           >
             All
           </div>
           <div
             className={`border-b-2 hover:cursor-pointer transition-all duration-200
                 ${isFavouritesActive ? `text-black border-primary` : `text-black/40 border-transparent hover:text-black`} `}
-            onClick={() => router.push("/history?view=favourites")}
+            onClick={() => router.push("/history?view=favourites", { scroll: false })}
           >
             Favourites ({favouritesCount})
           </div>
         </div>
-        <div className="flex gap-1 md:gap-4">
+        <div className="flex gap-1 md:gap-4 items-center">
+          <input
+            type="text"
+            placeholder="Search prompts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="border px-2 py-1 rounded text-sm w-40 md:w-64"
+          />
+
           <Search className="w-4 md:w-6 hover:cursor-pointer" />
           <ListFilter className="w-4 md:w-6 hover:cursor-pointer" />
         </div>

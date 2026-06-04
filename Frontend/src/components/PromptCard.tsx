@@ -24,27 +24,27 @@ export default function PromptCard({
         }}
         className="absolute top-2 right-2 text-xl p-1.5 rounded-lg bg-background/50 backdrop-blur-xs border border-primary/10 hover:scale-110 active:scale-95 transition-all text-yellow-500"
         aria-label={
-          data.isFavourite ? "Remove from favorites" : "Add to favorites"
+          data.favorite ? "Remove from favorites" : "Add to favorites"
         }
       >
-        {data.isFavourite ? "★" : "☆"}
+        {data.favorite ? "★" : "☆"}
       </button>
 
       {/* content */}
       <div className="space-y-2 pr-8">
         {/* date */}
         <div className="text-xs font-mono text-gray-400 tracking-tight">
-          {data.date}
+          {new Date(data.created_at.seconds * 1000).toLocaleDateString()}
         </div>
 
         {/* task title */}
         <h3 className="text-base sm:text-lg font-semibold tracking-tight text-gray-900 group-hover:text-primary transition-colors">
-          {data.task}
+          {data.title}
         </h3>
 
         {/* prompt snippet */}
         <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
-          {data.prompt}
+          {data.gemini_result}
         </p>
       </div>
     </article>
