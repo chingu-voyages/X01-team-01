@@ -54,7 +54,12 @@ export default function LogoutButton() {
   }
 
   return (
-    <Button variant="outline" className="w-20" onClick={handleLogout}>
+    <Button
+      variant="outline"
+      onClick={handleLogout}
+      aria-label="AI Helper logout"
+      className="w-24 h-10 text-xs font-semibold tracking-wide border-primary/20 hover:bg-primary/5 text-primary rounded-xl transition-colors"
+    >
       Log out
     </Button>
   );

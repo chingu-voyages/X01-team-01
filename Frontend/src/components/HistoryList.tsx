@@ -6,7 +6,18 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setEntireForm } from "@/redux/features/pentagramSlice";
 import { useRouter } from "next/navigation";
-import { doc, updateDoc, collection, addDoc, serverTimestamp,query,where,getDocs,deleteDoc} from "firebase/firestore";
+import { Button } from "./ui/button";
+import {
+  doc,
+  updateDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 interface HistoryListProps {
@@ -65,7 +76,7 @@ export default function HistoryList({
       );
     });
 
- async function handleDelete(uid: string) {
+  async function handleDelete(uid: string) {
     if (!window.confirm("Are you sure you want to delete this prompt?")) return;
 
     try {
@@ -149,7 +160,7 @@ export default function HistoryList({
       // 2. THEN unset all other current docs
       const q = query(
         collection(db, "prompt_drafts"),
-        where("user_id", "==", prompt.user_id)
+        where("user_id", "==", prompt.user_id),
       );
 
       const snapshot = await getDocs(q);
@@ -161,8 +172,8 @@ export default function HistoryList({
             updateDoc(d.ref, {
               current_doc: false,
               updated_at: serverTimestamp(),
-            })
-          )
+            }),
+          ),
       );
 
       // 3. update UI
@@ -192,14 +203,12 @@ export default function HistoryList({
 
     // 2. update visible state
     setVisiblePrompts((prev) =>
-      prev.map((p) =>
-        p.uid === uid ? { ...p, favorite: newValue } : p
-      )
+      prev.map((p) => (p.uid === uid ? { ...p, favorite: newValue } : p)),
     );
 
     // 3. update master state
     const updatedMaster = allData.map((p) =>
-      p.uid === uid ? { ...p, favorite: newValue } : p
+      p.uid === uid ? { ...p, favorite: newValue } : p,
     );
 
     onDataChange(updatedMaster);
@@ -207,7 +216,7 @@ export default function HistoryList({
     // 4. update modal if open
     if (selectedPrompt?.uid === uid) {
       setSelectedPrompt((prev) =>
-        prev ? { ...prev, favorite: newValue } : null
+        prev ? { ...prev, favorite: newValue } : null,
       );
     }
   }
@@ -240,120 +249,180 @@ export default function HistoryList({
       </div>
 
       {hasMore && currentView !== "favourites" && (
-        <button
-          onClick={loadMore}
-          className="w-full py-2 mt-4 text-sm font-medium border rounded-md hover:bg-gray-100 transition-colors"
-        >
-          Load More
-        </button>
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            onClick={loadMore}
+            className="w-2xl h-11 mt-6 text-sm font-semibold tracking-wide border-primary/20 bg-background hover:bg-primary/5 text-primary rounded-xl shadow-xs transition-all duration-200"
+          >
+            Load More
+          </Button>
+        </div>
       )}
 
       {selectedPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] flex flex-col p-6">
-            
-            {/* header */}
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold">
-                {selectedPrompt.title}
-              </h2>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-background border broder-gray-100 rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+            {/* modal header */}
+            <div className="flex justify-between items-start mb-4 border-b border-primary/20">
+              <div className="space-y-1">
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                  Prompt Details
+                </span>
+                <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-gray-900 mt-1">
+                  {selectedPrompt.title}
+                </h2>
+              </div>
+
               <button
                 onClick={() => setSelectedPrompt(null)}
-                className="text-gray-500 hover:text-black"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50 transition-colors text-lg font-medium"
+                aria-label="Close modal"
               >
                 X
               </button>
             </div>
 
-            {/* body */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4 text-sm my-4 text-justify">
-              <div><strong>Persona:</strong> {selectedPrompt?.fields.persona}</div>
-              <div><strong>Context:</strong> {selectedPrompt.fields.context}</div>
-              <div><strong>Task:</strong> {selectedPrompt.fields.task}</div>
-              <div><strong>Output:</strong> {selectedPrompt.fields.output}</div>
-              <div><strong>Constraints:</strong> {selectedPrompt.fields.constraint}</div>
+            {/* modal body */}
+            <div className="flex-1 overflow-y-auto pr-1 my-4 space-y-2 text-sm text-gray-700 leading-relaxed">
+              {/* metadata grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Persona
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt?.fields.persona}
+                  </p>
+                </div>
 
-              <div className="p-3 bg-gray-50 rounded border">
-                <strong>Gemini Result:</strong>
-                <p className="mt-2 whitespace-pre-wrap">
-                  {selectedPrompt.gemini_result}
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Context
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt?.fields.context}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Task
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt?.fields.task}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Output
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt?.fields.output}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100/80">
+                  <span className="font-bold uppercase tracking-wider text-[10px] text-gray-400 block mb-1">
+                    Constraints
+                  </span>
+                  <p className="text-gray-800 font-medium">
+                    {selectedPrompt?.fields.constraint}
+                  </p>
+                </div>
+              </div>
+
+              {/* prompt */}
+              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-1.5">
+                <span className="font-bold uppercase tracking-wider text-[10px] text-primary block">
+                  Generated Prompt
+                </span>
+                <p className="text-sm text-gray-900 font-mono leading-relaxed whitespace-pre-wrap select-all">
+                  {selectedPrompt?.gemini_result}
                 </p>
               </div>
             </div>
 
-            {/* actions */}
-            <div className="mt-6 flex flex-wrap justify-center gap-2 pt-4 border-t">
+            {/* modal footer - actions */}
+            <div className="mt-2 pt-4 border-t border-gray-100 grid grid-cols-2 gap-2 sm:flex sm:justify-around sm:items-center">
+              {/* left side */}
+              <div className="grid grid-cols-2 gap-2 col-span-2 sm:flex sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => handleToggleFavourite(selectedPrompt.uid)}
+                  className={`flex items-center gap-2 w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide transition-colors ${
+                    selectedPrompt?.favorite
+                      ? "bg-amber-50 border-amber-200/60 text-amber-700 hover:bg-amber-100/70"
+                      : ""
+                  }`}
+                >
+                  {selectedPrompt?.favorite ? "★ Favourited" : "☆ Favourite"}
+                </Button>
 
-              <button
-                onClick={() => handleToggleFavourite(selectedPrompt.uid)}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  selectedPrompt.favorite
-                    ? "bg-yellow-400 text-white"
-                    : "bg-white border border-gray-300 text-gray-700"
-                }`}
-              >
-                {selectedPrompt.favorite ? "★ Favourited" : "☆ Favourite"}
-              </button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDuplicate(selectedPrompt)}
+                  className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide"
+                >
+                  Duplicate
+                </Button>
+              </div>
 
-              <button
-                onClick={async () => {
-                  const selectedId = selectedPrompt.uid;
+              {/* right side */}
+              <div className="grid grid-cols-2 gap-2 col-span-2 mt-1 sm:mt-0 sm:flex sm:w-auto">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(selectedPrompt.uid)}
+                  className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide"
+                >
+                  Delete
+                </Button>
 
-                  // 1. update Firestore for ALL docs
-                  const updates = allData.map(async (p) => {
-                    await updateDoc(doc(db, "prompt_drafts", p.uid), {
-                      current_doc: p.uid === selectedId,
+                <Button
+                  variant="default"
+                  onClick={async () => {
+                    const selectedId = selectedPrompt.uid;
+
+                    const updates = allData.map(async (p) => {
+                      await updateDoc(doc(db, "prompt_drafts", p.uid), {
+                        current_doc: p.uid === selectedId,
+                      });
                     });
-                  });
 
-                  await Promise.all(updates);
+                    await Promise.all(updates);
 
-                  // 2. update local state (so UI updates instantly)
-                  const updated = allData.map((p) => ({
-                    ...p,
-                    current_doc: p.uid === selectedId,
-                  }));
+                    const updated = allData.map((p) => ({
+                      ...p,
+                      current_doc: p.uid === selectedId,
+                    }));
 
-                  onDataChange(updated);
+                    onDataChange(updated);
 
-                  // 3. store selected form for edit page
-                  const formDataForStorage = selectedPrompt.fields;
+                    const formDataForStorage = selectedPrompt.fields;
 
-                  localStorage.setItem(
-                    "pentagram_form",
-                    JSON.stringify(formDataForStorage)
-                  );
+                    localStorage.setItem(
+                      "pentagram_form",
+                      JSON.stringify(formDataForStorage),
+                    );
 
-                  dispatch(
-                    setEntireForm({
-                      persona: selectedPrompt.fields.persona,
-                      context: selectedPrompt.fields.context,
-                      task: selectedPrompt.fields.task,
-                      output: selectedPrompt.fields.output,
-                      constraints: selectedPrompt.fields.constraint,
-                    })
-                  );
+                    dispatch(
+                      setEntireForm({
+                        persona: selectedPrompt.fields.persona,
+                        context: selectedPrompt.fields.context,
+                        task: selectedPrompt.fields.task,
+                        output: selectedPrompt.fields.output,
+                        constraints: selectedPrompt.fields.constraint,
+                      }),
+                    );
 
-                  router.push("/home");
-                }}
-                className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
-              >
-                Edit
-              </button>
-
-              <button
-                onClick={() => handleDuplicate(selectedPrompt)}
-                className="px-3 py-1 bg-green-100 text-green-700 rounded"
-              >
-                Duplicate
-              </button>
-
-              <button
-                onClick={() => handleDelete(selectedPrompt.uid)}
-                className="px-3 py-1 bg-red-100 text-red-700 rounded"
-              >
-                Delete
-              </button>
+                    router.push("/home");
+                  }}
+                  className="w-full sm:w-auto bg-primary/70 hover:bg-primary h-10 px-6 rounded-xl text-xs font-semibold tracking-wide shadow-xs"
+                >
+                  Edit
+                </Button>
+              </div>
             </div>
           </div>
         </div>

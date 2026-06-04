@@ -13,23 +13,40 @@ export default function PromptCard({
 }: PromptCardProps) {
   return (
     <article
-      className="relative bg-gray-200 rounded-md p-4 cursor-pointer hover:bg-gray-300 transition-colors"
+      className="relative bg-primary/10 border border-primary/30 rounded-xl p-4 cursor-pointer hover:bg-primary/20 hover:shadow-md transition-all duration-200 group"
       onClick={() => onClick(data)}
     >
+      {/* favourite toggle */}
       <button
         onClick={(e) => {
           e.stopPropagation(); //prevents opening the modal
           onToggleFavourite(data.uid);
         }}
-        className="absolute top-4 right-4 text-xl hover:scale-110 transition-transform"
+        className="absolute top-2 right-2 text-xl p-1.5 rounded-lg bg-background/50 backdrop-blur-xs border border-primary/10 hover:scale-110 active:scale-95 transition-all text-yellow-500"
+        aria-label={
+          data.favorite ? "Remove from favorites" : "Add to favorites"
+        }
       >
         {data.favorite ? "★" : "☆"}
       </button>
-      <div className="text-xs pb-4">
-        {new Date(data.created_at.seconds * 1000).toLocaleDateString()}
+
+      {/* content */}
+      <div className="space-y-2 pr-8">
+        {/* date */}
+        <div className="text-xs font-mono text-gray-400 tracking-tight">
+          {new Date(data.created_at.seconds * 1000).toLocaleDateString()}
+        </div>
+
+        {/* task title */}
+        <h3 className="text-base sm:text-lg font-semibold tracking-tight text-gray-900 group-hover:text-primary transition-colors">
+          {data.title}
+        </h3>
+
+        {/* prompt snippet */}
+        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+          {data.gemini_result}
+        </p>
       </div>
-      <div className="text-base pb-2 font-semibold">{data.title}</div>
-      <div className="text-sm line-clamp-3">{data.gemini_result}</div>
     </article>
   );
 }

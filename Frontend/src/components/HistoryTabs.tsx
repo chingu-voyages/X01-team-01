@@ -12,6 +12,7 @@ export default function HistoryTabs({ favouritesCount, searchQuery, setSearchQue
   const router = useRouter();
   const searchParams = useSearchParams();
 
+
   //extract current view from the URL
   const currentView = searchParams.get("view");
 

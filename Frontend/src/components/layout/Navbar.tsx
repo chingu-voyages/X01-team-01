@@ -23,8 +23,8 @@ export default function Navbar() {
   );
 
   return (
-    <header className=" z-50 sticky top-0">
-      <div className="bg-background/85 backdrop-blur w-full border-b border-border ">
+    <header className="z-50 sticky top-0">
+      <div className="bg-background/85 backdrop-blur w-full">
         <div className="relative container flex h-20 items-center justify-between gap-2 sm:gap-3 ">
           <Link
             href="/home"
@@ -46,9 +46,9 @@ export default function Navbar() {
                   key={link.label}
                   href={link.href}
                   className={cn(
-                    "text-base transition-colors",
+                    "text-base",
                     active
-                      ? "text-foreground"
+                      ? "text-foreground underline decoration-primary decoration-2 underline-offset-4"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -59,6 +59,7 @@ export default function Navbar() {
           </nav>
 
           <div>{isLoggedIn ? <LogoutButton /> : <LoginButton />}</div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/60 to-transparent" />
         </div>
       </div>
     </header>

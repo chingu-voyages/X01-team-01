@@ -1,31 +1,43 @@
 "use client";
 import FormSection from "@/components/FormSection";
 import ResultSkeleton from "@/components/ResultSkeleton";
-import EvaluationSkeleton from "@/components/EvaluationSkeleton";
 import EvaluationPanel from "@/components/EvaluationPanel";
 // import ResponseCard from "@/components/ResponseCard";
 import SubmitButton from "@/components/SubmitButton";
+import ComparisonModal from "@/components/ComparisonModal";
+import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
+import { Button } from "@/components/ui/button";
+import {
+  ScoringResponse,
+  shouldShowSuggestion,
+} from "@/app/utils/scoringUtils";
 import ReactMarkdown from "react-markdown";
 // import { useAppSelector } from "@/redux/hooks";
 import { type FieldId } from "@/const/fields";
 import { useForm } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
-import {
-  ScoringResponse,
-  shouldShowSuggestion,
-} from "@/app/utils/scoringUtils";
-import { Button } from "@/components/ui/button";
 import { usePentagram } from "@/redux/hooks/usePentagram";
-import ComparisonModal from "@/components/ComparisonModal";
-import { toast } from "sonner";
-import ApplySuggestionToast from "@/components/ui/ApplySuggestionToast";
 import { useAppSelector } from "@/redux/hooks";
+import { toast } from "sonner";
 import Link from "next/link";
-import {getFirestore, collection, addDoc,serverTimestamp,doc,setDoc,updateDoc,getDoc, query, where, getDocs, limit,increment} from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  query,
+  where,
+  getDocs,
+  limit,
+  increment,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function Home() {
-
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -283,9 +295,7 @@ export default function Home() {
           updated_at: serverTimestamp(),
         });
       }
-
     } catch (err: any) {
-
       const duration = Date.now() - startTime;
 
       //Updates-analytics-on-fail
@@ -300,8 +310,6 @@ export default function Home() {
       } else {
         setError("Something went wrong. Please try again.");
       }
-
-
     } finally {
       clearTimeout(timeout);
       setIsLoading(false);
@@ -391,18 +399,15 @@ export default function Home() {
 
       // 🔥 SAVE SCORES TO FIRESTORE HERE
       if (currentDraftId) {
-        await updateDoc(
-          doc(db, "prompt_drafts", currentDraftId),
-          {
-            score: {
-              clarity: result.global_scores.clarity,
-              specificity: result.global_scores.specificity,
-              format_guidance: result.global_scores.format_guidance,
-              overall: result.overall,
-            },
-            updated_at: serverTimestamp(),
-          }
-        );
+        await updateDoc(doc(db, "prompt_drafts", currentDraftId), {
+          score: {
+            clarity: result.global_scores.clarity,
+            specificity: result.global_scores.specificity,
+            format_guidance: result.global_scores.format_guidance,
+            overall: result.overall,
+          },
+          updated_at: serverTimestamp(),
+        });
       }
     } catch (err) {
       console.error("Scoring error:", err);
@@ -557,9 +562,9 @@ export default function Home() {
 
   //logic-for-checking-if-user-has-any-documents
   useEffect(() => {
-      if (!user) return;
+    if (!user) return;
 
-     async function initializeDraft() {
+    async function initializeDraft() {
       if (hasInitializedRef.current) return;
       hasInitializedRef.current = true;
 
@@ -592,48 +597,45 @@ export default function Home() {
           collection(db, "prompt_drafts"),
           where("user_id", "==", user?.id),
           where("current_doc", "==", true),
-          limit(1)
+          limit(1),
         );
 
         const snapshot = await getDocs(q);
 
         // USER HAS NO DRAFTS
         if (snapshot.empty) {
-          const newDraft = await addDoc(
-            collection(db, "prompt_drafts"),
-            {
-              user_id: user?.id,
+          const newDraft = await addDoc(collection(db, "prompt_drafts"), {
+            user_id: user?.id,
 
-              created_at: serverTimestamp(),
+            created_at: serverTimestamp(),
 
-              updated_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
 
-              title: "Untitled Prompt",
+            title: "Untitled Prompt",
 
-              fields: {
-                persona: "",
-                context: "",
-                task: "",
-                output: "",
-                constraint: "",
-              },
+            fields: {
+              persona: "",
+              context: "",
+              task: "",
+              output: "",
+              constraint: "",
+            },
 
-              score: {
-                clarity: null,
-                specificity: null,
-                format_guidance: null,
-                overall: null,
-              },
+            score: {
+              clarity: null,
+              specificity: null,
+              format_guidance: null,
+              overall: null,
+            },
 
-              gemini_result: "",
+            gemini_result: "",
 
-              favorite: false,
+            favorite: false,
 
-              words: 0,
+            words: 0,
 
-              current_doc: true,
-            }
-          );
+            current_doc: true,
+          });
 
           await updateDoc(newDraft, {
             id: newDraft.id,
@@ -683,16 +685,16 @@ export default function Home() {
         console.error("Draft initialization failed:", err);
 
         setSaveError(
-          "Your result is displayed but could not be saved. Please export or copy it now."
+          "Your result is displayed but could not be saved. Please export or copy it now.",
         );
       }
     }
 
-      initializeDraft();
-    }, [user]);
+    initializeDraft();
+  }, [user]);
 
   //firestore-document
-   async function savePromptDraft(formData: Record<FieldId, string>) {
+  async function savePromptDraft(formData: Record<FieldId, string>) {
     if (!user || !currentDraftId) return;
 
     try {
@@ -716,21 +718,21 @@ export default function Home() {
           },
 
           score: {
-              clarity: scores?.global_scores?.clarity ?? null,
-              specificity: scores?.global_scores?.specificity ?? null,
-              format_guidance: scores?.global_scores?.format_guidance ?? null,
-              overall: scores?.overall ?? null,
-            },
+            clarity: scores?.global_scores?.clarity ?? null,
+            specificity: scores?.global_scores?.specificity ?? null,
+            format_guidance: scores?.global_scores?.format_guidance ?? null,
+            overall: scores?.overall ?? null,
+          },
 
-            gemini_result: result || "",
+          gemini_result: result || "",
 
-            favorite: false,
+          favorite: false,
 
-            words: result? result.trim().split(/\s+/).length: 0,
+          words: result ? result.trim().split(/\s+/).length : 0,
 
-            current_doc: true,
+          current_doc: true,
         },
-        { merge: true }
+        { merge: true },
       );
     } catch (err) {
       console.error("Unable to save. Please try again. ", err);
@@ -758,135 +760,140 @@ export default function Home() {
 
   //allows-for-automatic-saves
   useEffect(() => {
-  if (!draftReady) return;
-  if (!hasHydrated) return;
-  if (!user || !currentDraftId) return;
+    if (!draftReady) return;
+    if (!hasHydrated) return;
+    if (!user || !currentDraftId) return;
 
-  const data = {
-    persona: watchedPersona,
-    context: watchedContext,
-    task: watchedTask,
-    output: watchedOutput,
-    constraint: watchedConstraint,
-    gemini_result: result,
-  };
+    const data = {
+      persona: watchedPersona,
+      context: watchedContext,
+      task: watchedTask,
+      output: watchedOutput,
+      constraint: watchedConstraint,
+      gemini_result: result,
+    };
 
-  localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
 
-  if (saveTimeoutRef.current) {
-    clearTimeout(saveTimeoutRef.current);
-  }
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
 
-  saveTimeoutRef.current = setTimeout(() => {
-     if (isEmptyPrompt(data)) return;
-    savePromptDraft(data);
-  }, 800);
-}, [
-  hasHydrated,
-  user,
-  watchedPersona,
-  watchedContext,
-  watchedTask,
-  watchedOutput,
-  watchedConstraint,
-  result,
-]);
-  
-//CREATE-A-NEW-DOCUMENT
-async function handleCreateNewDraft() {
-  if (!user) return;
+    saveTimeoutRef.current = setTimeout(() => {
+      if (isEmptyPrompt(data)) return;
+      savePromptDraft(data);
+    }, 800);
+  }, [
+    hasHydrated,
+    user,
+    watchedPersona,
+    watchedContext,
+    watchedTask,
+    watchedOutput,
+    watchedConstraint,
+    result,
+  ]);
 
-  try {
-    const q = query(
-      collection(db, "prompt_drafts"),
-      where("user_id", "==", user.id)
-    );
+  //CREATE-A-NEW-DOCUMENT
+  async function handleCreateNewDraft() {
+    if (!user) return;
 
-    const snapshot = await getDocs(q);
+    try {
+      const q = query(
+        collection(db, "prompt_drafts"),
+        where("user_id", "==", user.id),
+      );
 
-    await Promise.all(
-      snapshot.docs.map((d) =>
-        updateDoc(d.ref, {
-          current_doc: false,
-          updated_at: serverTimestamp(),
-        })
-      )
-    );
+      const snapshot = await getDocs(q);
 
-    const newDraftRef = await addDoc(collection(db, "prompt_drafts"), {
-      user_id: user.id,
-      created_at: serverTimestamp(),
-      updated_at: serverTimestamp(),
-      title: "Untitled Prompt",
-      fields: {
+      await Promise.all(
+        snapshot.docs.map((d) =>
+          updateDoc(d.ref, {
+            current_doc: false,
+            updated_at: serverTimestamp(),
+          }),
+        ),
+      );
+
+      const newDraftRef = await addDoc(collection(db, "prompt_drafts"), {
+        user_id: user.id,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+        title: "Untitled Prompt",
+        fields: {
+          persona: "",
+          context: "",
+          task: "",
+          output: "",
+          constraint: "",
+        },
+        score: {
+          clarity: null,
+          specificity: null,
+          format_guidance: null,
+          overall: null,
+        },
+        gemini_result: "",
+        favorite: false,
+        words: 0,
+        current_doc: true,
+      });
+
+      await updateDoc(newDraftRef, { id: newDraftRef.id });
+
+      setCurrentDraftId(newDraftRef.id);
+
+      // 🔥 1. RESET FORM
+      reset({
         persona: "",
         context: "",
         task: "",
         output: "",
         constraint: "",
-      },
-      score: {
-        clarity: null,
-        specificity: null,
-        format_guidance: null,
-        overall: null,
-      },
-      gemini_result: "",
-      favorite: false,
-      words: 0,
-      current_doc: true,
-    });
+      });
 
-    await updateDoc(newDraftRef, { id: newDraftRef.id });
+      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
+      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
 
-    setCurrentDraftId(newDraftRef.id);
+      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
+      persistFormToRedux({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
 
-    // 🔥 1. RESET FORM
-    reset({
-      persona: "",
-      context: "",
-      task: "",
-      output: "",
-      constraint: "",
-    });
+      // 🔥 4. CLEAR UI STATE
+      resetAnalysisPanels();
 
-    // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
-    localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
-
-    // 🔥 3. CLEAR REDUX PENTAGRAM STATE
-    persistFormToRedux({
-      persona: "",
-      context: "",
-      task: "",
-      output: "",
-      constraint: "",
-    });
-
-    // 🔥 4. CLEAR UI STATE
-    resetAnalysisPanels();
-
-    toast.success("New draft created");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to create new draft");
+      toast.success("New draft created");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to create new draft");
+    }
   }
-}
-
 
   return (
     <>
       <section className="container  section-padding">
-        <div className="mb-10 text-center">
-          <h1 className="mb-2 tracking-tighter leading-tight font-medium">
-            AI Helper
-          </h1>
-          <h2 className="mb-2 tracking-tighter font-light">
-            Sculpt your intent into editorial-grade prompts using the Pentagram
-            framework.
-          </h2>
-          <h3 className="tracking-tighter font-light">
+        <div className="mb-12 text-center max-w-3xl mx-auto space-y-4">
+          <h3 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-2">
             Precision architecture for advanced reasoning.
           </h3>
+          <h1 className="tracking-tight text-4xl sm:text-6xl font-black text-gray-900 leading-none">
+            AI{" "}
+            <span className="text-primary bg-linear-to-r from-primary to-primary/70 bg-clip-text">
+              Helper
+            </span>
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-600 font-normal tracking-tight leading-relaxed max-w-2xl mx-auto">
+            Sculpt your intent into{" "}
+            <span className="font-semibold text-gray-900">
+              editorial-grade prompts
+            </span>{" "}
+            using the Pentagram framework.
+          </p>
         </div>
 
         <Button
@@ -935,9 +942,15 @@ async function handleCreateNewDraft() {
           </>
         )}
 
+        {/* GENERATED AI RESPONSE */}
         {!isLoading && result && (
-          <div className="mt-6 p-4 border rounded bg-white prose">
-            <ReactMarkdown>{result}</ReactMarkdown>
+          <div className="mt-6 py-1 border-l-4 border-primary pl-6 pr-4 rounded-xl shadow-md bg-secondary/80 text-justify">
+            <h2 className="text-center uppercase my-4 font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
+              AI response:
+            </h2>
+            <div className="prompt-content">
+              <ReactMarkdown>{result}</ReactMarkdown>
+            </div>
           </div>
         )}
 
@@ -955,7 +968,7 @@ async function handleCreateNewDraft() {
         )}
 
         {!isLoading && !result && !error && (
-          <div className="mt-6 text-gray-500 italic">
+          <div className="mt-6 py-3 border-l-4 border-primary pl-6 pr-4 rounded-lg shadow-md bg-secondary/80 text-gray-800">
             Your generated response will appear here once you submit the form.
           </div>
         )}
@@ -975,7 +988,7 @@ async function handleCreateNewDraft() {
             ) : (
               <Button
                 variant="secondary"
-                className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
                 onClick={handleSubmit(onScore)}
                 disabled={isRescoreDisabled}
               >
@@ -991,25 +1004,75 @@ async function handleCreateNewDraft() {
 
         {isScoring && <ResultSkeleton />}
 
+        {/* SCORES CARD */}
         {scores && !isScoring && (
-          <div className="mt-6 p-4 border rounded bg-white">
-            <p className={getColor(scores.global_scores.clarity)}>
-              Clarity: {scores.global_scores.clarity}/10
-            </p>
+          <div className="mt-6 p-6 border-l-4 border-primary rounded-xl shadow-md bg-secondary/80">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-gray-100">
+              <div>
+                <h3 className="mb-4 text-center uppercase font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
+                  Prompt Scoring
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Weakest field:{" "}
+                  <span className="font-medium text-destructive capitalize">
+                    {scores.weakest_field}
+                  </span>
+                </p>
+              </div>
 
-            <p className={getColor(scores.global_scores.specificity)}>
-              Specificity: {scores.global_scores.specificity}/10
-            </p>
+              {/* score badge */}
+              <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl self-start md:self-auto">
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  Overall
+                </span>
+                <span className="text-2xl font-black">{scores.overall}/10</span>
+              </div>
 
-            <p className={getColor(scores.global_scores.format_guidance)}>
-              Format Guidance: {scores.global_scores.format_guidance}/10
-            </p>
+              {/* individual metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-600">
+                    Clarity
+                  </span>
+                  <span
+                    className={`text-2xl font-bold ${getColor(scores.global_scores.clarity)}`}
+                  >
+                    {scores.global_scores.clarity}
+                    <span className="text-xs text-gray-400 font-normal">
+                      /10
+                    </span>
+                  </span>
+                </div>
 
-            <p className="mt-2 font-semibold">Overall: {scores.overall}/10</p>
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-600">
+                    Specificity
+                  </span>
+                  <span
+                    className={`text-2xl font-bold ${getColor(scores.global_scores.specificity)}`}
+                  >
+                    {scores.global_scores.specificity}
+                    <span className="text-xs text-gray-400 font-normal">
+                      /10
+                    </span>
+                  </span>
+                </div>
 
-            <p className="mt-2 text-gray-600">
-              Weakest field: {scores.weakest_field}
-            </p>
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-600">
+                    Format Guidance
+                  </span>
+                  <span
+                    className={`text-2xl font-bold ${getColor(scores.global_scores.format_guidance)}`}
+                  >
+                    {scores.global_scores.format_guidance}
+                    <span className="text-xs text-gray-400 font-normal">
+                      /10
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1027,29 +1090,35 @@ async function handleCreateNewDraft() {
         )}
 
         {saveError && (
-          <div className="mt-4 p-4 border rounded bg-yellow-50 text-yellow-700">
-            {saveError}
+          <div className="mt-4 p-4 bg-amber-50/50 border border-amber-200/50 rounded-xl text-xs font-medium text-amber-800 tracking-wide animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">⚠️</span>
+              <p className="leading-relaxed">{saveError}</p>
+            </div>
           </div>
         )}
 
+        {/* SUGGESTED IMPROVEMENT */}
         {scores && (
-          <div className="mt-6 p-4 border rounded bg-gray-50">
-            <h3 className="font-semibold mb-2">Suggested improvement</h3>
+          <div className="mt-4 p-6 border-l-4 border-primary rounded-xl shadow-sm bg-secondary/50">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              💡 Suggested improvement
+            </h3>
 
             {scores.suggestion ? (
               <>
-                <div className="p-3 bg-white border rounded mb-3 whitespace-pre-wrap">
+                <div className="p-4 bg-white border border-gray-200/80 rounded-lg mb-3 text-sm text-gray-800 whitespace-pre-wrap shadow-inner font-mono tracking-light leading-relaxed">
                   {scores.suggestion.improved}
                 </div>
 
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 mb-4 italic leading-normal">
                   {scores.suggestion.explanation}
                 </p>
 
                 <div className="flex justify-center">
                   <Button
                     variant="secondary"
-                    className="w-full md:w-full h-12 text-base font-bold"
+                    className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
                     onClick={() => setIsModalOpen(true)}
                   >
                     Review Suggestion
@@ -1057,7 +1126,7 @@ async function handleCreateNewDraft() {
                 </div>
               </>
             ) : (
-              <p className="text-gray-500 italic">
+              <p className="text-gray-500 italic text-sm py-2">
                 No suggestion needed — prompt is strong enough.
               </p>
             )}
@@ -1069,11 +1138,11 @@ async function handleCreateNewDraft() {
             {isGuest ? null : (
               <Button
                 variant="secondary"
-                className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
+                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
                 onClick={handleSubmit(onEvaluate)}
                 disabled={isEvaluating}
               >
-                {isEvaluating ? "Evaluating..." : "Evaluate response"}
+                {isEvaluating ? "Evaluating..." : "Evaluate Response"}
               </Button>
             )}
           </div>
