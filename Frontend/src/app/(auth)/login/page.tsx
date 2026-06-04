@@ -119,7 +119,7 @@ export default function RegisterPage() {
           {/* GitHub */}
           <Button
             variant="default"
-            className="h-10"
+            className="w-full h-11 text-sm font-semibold tracking-wide rounded-xl shadow-xs transition-colors"
             onClick={() => handleOAuthSignIn(signInWithGithub, "github")}
             disabled={loadingProvider !== null}
           >
