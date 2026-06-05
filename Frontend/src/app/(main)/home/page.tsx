@@ -803,6 +803,45 @@ export default function Home() {
     if (!user) return;
 
     try {
+      // 🔥 1. RESET FORM
+      reset({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
+
+      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
+      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
+
+      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
+      persistFormToRedux({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
+
+      // 🔥 4. CLEAR UI STATE
+      setResult(null);
+      setScores(null);
+      resetAnalysisPanels();
+      setHasAssembled(false);
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+
+      toast.success("New draft created");
+    } catch (uiErr) {
+      console.error("Local UI reset failed:", uiErr);
+      toast.error("Failed to create new draft");
+    }
+
+    try {
       const q = query(
         collection(db, "prompt_drafts"),
         where("user_id", "==", user.id),
@@ -844,41 +883,10 @@ export default function Home() {
       });
 
       await updateDoc(newDraftRef, { id: newDraftRef.id });
-
       setCurrentDraftId(newDraftRef.id);
-
-      // 🔥 1. RESET FORM
-      reset({
-        persona: "",
-        context: "",
-        task: "",
-        output: "",
-        constraint: "",
-      });
-
-      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
-      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
-
-      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
-      persistFormToRedux({
-        persona: "",
-        context: "",
-        task: "",
-        output: "",
-        constraint: "",
-      });
-
-      // 🔥 4. CLEAR UI STATE
-      setResult(null);
-      setScores(null);
-      resetAnalysisPanels();
-
-      setHasAssembled(false);
-
-      toast.success("New draft created");
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to create new draft");
+      console.error("Database backup sync failed:", err);
+      toast.error("Failed to save new draft to cloud database");
     }
   }
 
@@ -951,8 +959,6 @@ export default function Home() {
             </button>
           </div>
         )}
-
-        
 
         {/* actions once prompt is assembled */}
         {!isGuest && result && (
