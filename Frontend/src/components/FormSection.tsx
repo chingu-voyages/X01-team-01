@@ -66,7 +66,10 @@ export default function FormSection({
                     />
                   </div>
                   <Button
-                    onClick={() => setFieldValue(field.id, "")}
+                    onClick={() => {
+                      setFieldValue(field.id, "");
+                      resetField(field.id, { defaultValue: "" });
+                    }}
                     disabled={values[field.id] === ""}
                     variant="ghost"
                     className="h-7 px-2 hover:bg-gray-100 text-gray-400 disabled:opacity-30 hover:text-gray-600 transition-colors gap-1 rounded-md"
