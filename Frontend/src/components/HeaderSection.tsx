@@ -12,26 +12,46 @@ export default function HeaderSection() {
     : emailPrefix || null;
 
   return (
-    <div className="mb-8 p-6 rounded-xl border border-gray-100 bg-white shadow-sm">
-      <div className="space-y-2">
-        <p className="text-xs font-semibold tracking-widest uppercase text-primary">
-          AI Prompt Workspace
-        </p>
-
-        <h2 className="text-2xl md:text-4xl font-black tracking-tight text-gray-900">
+    <>
+      <div className="mb-8 sm:mb-12 text-center max-w-3xl mx-auto space-y-4">
+        {/* dynamic pill badge */}
+        <h2 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-2">
           {status === "guest"
             ? "Welcome to AI Helper."
             : greetingName
               ? `Welcome back, ${greetingName}`
-              : "Welcome to AI Helper."}
+              : "Welcome to AI Helper"}
         </h2>
 
-        <p className="text-sm md:text-base text-gray-500 leading-relaxed">
-          {status === "guest"
-            ? "Build prompts and explore the Pentagram framework."
-            : "Continue refining prompts and generating higher-quality AI responses."}
+        {/* main title */}
+        <h1 className="tracking-tight text-4xl sm:text-6xl font-black text-gray-900 leading-none">
+          AI{" "}
+          <span className="text-primary bg-linear-to-r from-primary to-primary/70 bg-clip-text">
+            Helper
+          </span>
+        </h1>
+
+        {/* dynamic description paragraph */}
+        <p className="text-base sm:text-xl text-gray-600 font-normal tracking-tight leading-relaxed max-w-2xl mx-auto">
+          {status === "guest" ? (
+            <>
+              Sculpt your intent into{" "}
+              <span className="font-semibold text-gray-900">
+                editorial-grade prompts
+              </span>{" "}
+              using the Pentagram framework.
+            </>
+          ) : (
+            <>
+              Continue refining your intent into{" "}
+              <span className="font-semibold text-gray-900">
+                editorial-grade prompts
+              </span>{" "}
+              and generating higher-quality AI responses.
+            </>
+          )}
         </p>
       </div>
-    </div>
+    </>
   );
 }
