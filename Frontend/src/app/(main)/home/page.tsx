@@ -992,7 +992,7 @@ export default function Home() {
             ) : (
               <Button
                 variant="secondary"
-                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
+                className="w-full mt-4 md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
                 onClick={handleSubmit(onScore)}
                 disabled={isRescoreDisabled}
               >
@@ -1016,14 +1016,15 @@ export default function Home() {
                 <h3 className="mb-4 text-center uppercase font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
                   Prompt Scoring
                 </h3>
-                <p className="text-sm text-gray-500">
-                  Weakest field:{" "}
-                  <span className="font-medium text-destructive capitalize">
-                    {scores.weakest_field}
-                  </span>
-                </p>
+                {scores.suggestion ? (
+                  <p className="text-sm text-gray-500">
+                    Weakest field:{" "}
+                    <span className="font-medium text-destructive capitalize">
+                      {scores.weakest_field}
+                    </span>
+                  </p>
+                ) : null}
               </div>
-
               {/* score badge */}
               <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl self-start md:self-auto">
                 <span className="text-xs font-bold uppercase tracking-wider">
