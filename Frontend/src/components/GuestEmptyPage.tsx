@@ -122,7 +122,7 @@ export default function GuestEmptyPage() {
           </p>
           <Link
             href="/login"
-            className="bg-emerald-200/50 shadow-sm px-6 py-2 mb-2 rounded-lg font-medium hover:bg-emerald-200 transition-colors"
+            className="bg-primary text-white shadow-sm px-8 py-2 mb-2 rounded-xl font-semibold hover:bg-primary/80 transition-colors"
           >
             Sign in
           </Link>
