@@ -37,13 +37,6 @@ export default function ProfileSection() {
 
       {/* Right Column Group: Account Actions */}
       <div className="flex gap-2.5 justify-center items-center w-full md:w-auto">
-        <Button
-          variant="outline"
-          className="w-full md:w-auto h-10 px-4 rounded-xl text-xs font-semibold tracking-wide border-primary/20 hover:bg-primary/5 text-primary"
-        >
-          Edit profile
-        </Button>
-
         <Link href="/home" passHref className="w-full md:w-auto">
           <Button
             variant="default"
