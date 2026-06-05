@@ -36,6 +36,7 @@ import {
   increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import HeaderSection from "@/components/HeaderSection";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -865,6 +866,8 @@ export default function Home() {
       });
 
       // 🔥 4. CLEAR UI STATE
+      setResult(null);
+      setScores(null);
       resetAnalysisPanels();
 
       toast.success("New draft created");
@@ -876,7 +879,8 @@ export default function Home() {
 
   return (
     <>
-      <section className="container  section-padding">
+      <section className="container section-padding">
+        <HeaderSection />
         <div className="mb-12 text-center max-w-3xl mx-auto space-y-4">
           <h3 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-2">
             Precision architecture for advanced reasoning.
