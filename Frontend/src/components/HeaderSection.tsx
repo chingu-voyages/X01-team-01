@@ -13,7 +13,7 @@ export default function HeaderSection() {
 
   return (
     <>
-      <div className="mb-8 sm:mb-12 text-center max-w-3xl mx-auto space-y-4">
+      <div className="text-center max-w-3xl mx-auto space-y-4">
         {/* dynamic pill badge */}
         <h2 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-2">
           {status === "guest"

@@ -35,7 +35,7 @@ export default function FormSection({
 
   return (
     <div className="p-6 md:p-8 rounded-2xl bg-linear-to-b from-gray-100 to-primary border-l border-r border-primary/20 shadow-xs mt-8">
-      <form className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-3 gap-6">
+      <form className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {FIELDS.map((field, index) => {
           const hasValue = values[field.id] !== "";
 

@@ -948,7 +948,7 @@ export default function Home() {
         <HeaderSection />
 
         {/* only for testing */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 text-gray-50">
           <button type="button" onClick={handleFillTestData}>
             test prompt
           </button>
