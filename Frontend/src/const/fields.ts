@@ -2,34 +2,36 @@ export const FIELDS = [
   {
     id: "persona",
     label: "Persona",
-    placeholder: "e.g. Senior Copywriter at a tech startup",
-    help: "Give the AI a role with real expertise. The more specific the better. Example: You are a senior UX writer at a tech startup.",
+    placeholder: "e.g. Senior UX Writer at a fintech startup",
+    help: "Assign an expert role and perspective to the AI. Formula: 'You are a [Job Title] specializing in [Niche].'",
   },
   {
     id: "context",
     label: "Context",
     placeholder:
-      "e.g. I am writing for first-time homebuyers who do not understand mortgage terms",
-    help: "Give the AI the background it needs. What is the situation and who is the audience? Example: I have a 500-word onboarding email that users find confusing. The audience is non-technical",
+      "e.g. Launching a mobile app for first-time investors who find finance confusing",
+    help: "Provide the background, scenario, and target audience. Explain *who* this is for and *why* you are creating it.",
   },
   {
     id: "task",
     label: "Task (The Core Objective)",
     placeholder:
-      "e.g. Rewrite the hero section to focus on saving time not features",
-    help: "Tell the AI exactly what to do. Start with a verb and keep it to one clear action. Example: Rewrite the onboarding email so it feels friendly and easy to scan.",
+      "e.g. Rewrite the homepage hero section to focus on emotional benefits over features",
+    help: "State the exact action the AI must take. Start with a strong action verb (e.g., Rewrite, Draft, Analyze) and stick to one primary goal.",
   },
   {
     id: "output",
     label: "Output Format",
-    placeholder: "e.g. Two short paragraphs, punchy tone, no bullet points",
-    help: "Tell the AI how you want the response to look. Be as specific as you can. Example: One short paragraph followed by 3 bullet points. Plain text, no markdown.",
+    placeholder:
+      "e.g. A Markdown table with 3 columns, followed by a 50-word summary paragraph",
+    help: "Define the structure, length, and layout of the response. Specify structural elements like paragraphs, bullet points, code blocks, or tables.",
   },
   {
     id: "constraint",
     label: "Constraints",
-    placeholder: "e.g. Avoid jargon, keep under 100 words, no passive voice",
-    help: "Set the rules. Word limits, tone, things to avoid. Example: Keep it under 120 words. No jargon. Do not mention pricing.",
+    placeholder:
+      "e.g., Maximum 150 words, do not use corporate jargon, omit pricing details",
+    help: "Establish the boundaries and negative guardrails. Clearly list what the AI *must not* do, stylistic limitations, or strict word caps.",
   },
 ] as const;
 

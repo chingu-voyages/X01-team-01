@@ -83,6 +83,8 @@ export default function Home() {
 
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const [hasAssembled, setHasAssembled] = useState(false);
+
   //current user status
   const status = useAppSelector((state) => state.auth.status);
 
@@ -243,6 +245,7 @@ export default function Home() {
 
     const isDemo =
       new URLSearchParams(window.location.search).get("demo") === "true";
+
     if (isDemo) {
       const manualPrompt = `Persona: ${formData.persona}
         Context: ${formData.context}
@@ -251,6 +254,7 @@ export default function Home() {
         Constraint: ${formData.constraint}`;
 
       setResult(manualPrompt);
+      setHasAssembled(true);
       setIsLoading(false);
 
       return;
@@ -307,12 +311,13 @@ export default function Home() {
       }
 
       if (err.name === "AbortError") {
-        setError("Request timed out. Please try again.");
+        setError("Request timed out.");
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Something went wrong.");
       }
     } finally {
       clearTimeout(timeout);
+      setHasAssembled(true);
       setIsLoading(false);
     }
   }
@@ -412,7 +417,7 @@ export default function Home() {
       }
     } catch (err) {
       console.error("Scoring error:", err);
-      setScoreError("Unable to score your prompt. Please try again.");
+      setScoreError("Unable to score your prompt.");
     } finally {
       setIsScoring(false);
     }
@@ -433,6 +438,34 @@ export default function Home() {
     setIsEvaluating(true);
     setEvaluation(null);
     setEvaluationError(null);
+
+    /* ------ DEMO MODE ------- */
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+
+    if (isDemo) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const mockEvalData = {
+        completeness: "Partially answered",
+        format_compliance:
+          "Complies with the structure requirements but lacks the requested tone restrictions.",
+        missing_elements: [
+          {
+            requirement: "Tone Consistency",
+            issue:
+              "The output drops the requested persona dialogue constraints in the final paragraphs.",
+          },
+        ],
+        suggested_follow_up:
+          "Rewrite the final paragraph ensuring that the exact tonal character style constraints are maintained continuously.",
+      };
+
+      setEvaluation(mockEvalData as any);
+      setIsEvaluating(false);
+      return;
+    }
+    /* ------ END DEMO MODE ------- */
 
     try {
       const res = await fetch("/api/evaluate", {
@@ -463,7 +496,7 @@ export default function Home() {
     } catch (err) {
       console.error("Evaluation error:", err);
 
-      setEvaluationError("Evaluation unavailable. Please try again.");
+      setEvaluationError("Evaluation unavailable.");
     } finally {
       setIsEvaluating(false);
     }
@@ -800,6 +833,55 @@ export default function Home() {
     if (!user) return;
 
     try {
+      // 🔥 1. RESET FORM
+      reset({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
+
+      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
+      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
+
+      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
+      persistFormToRedux({
+        persona: "",
+        context: "",
+        task: "",
+        output: "",
+        constraint: "",
+      });
+
+      // 🔥 4. CLEAR UI STATE
+      setResult(null);
+      setScores(null);
+      resetAnalysisPanels();
+      setHasAssembled(false);
+
+      toast.success("New draft created");
+    } catch (uiErr) {
+      console.error("Local UI reset failed:", uiErr);
+      toast.error("Failed to create new draft");
+    }
+
+    setTimeout(() => {
+      document.querySelector("section")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+
+    /* ----- DEMO MODE ------ */
+
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+    if (isDemo) return;
+
+    /* ----- END DEMO MODE ------ */
+
+    try {
       const q = query(
         collection(db, "prompt_drafts"),
         where("user_id", "==", user.id),
@@ -841,95 +923,36 @@ export default function Home() {
       });
 
       await updateDoc(newDraftRef, { id: newDraftRef.id });
-
       setCurrentDraftId(newDraftRef.id);
-
-      // 🔥 1. RESET FORM
-      reset({
-        persona: "",
-        context: "",
-        task: "",
-        output: "",
-        constraint: "",
-      });
-
-      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
-      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
-
-      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
-      persistFormToRedux({
-        persona: "",
-        context: "",
-        task: "",
-        output: "",
-        constraint: "",
-      });
-
-      // 🔥 4. CLEAR UI STATE
-      setResult(null);
-      setScores(null);
-      resetAnalysisPanels();
-
-      toast.success("New draft created");
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to create new draft");
+      console.error("Database backup sync failed:", err);
+      toast.error("Failed to save new draft to cloud database");
     }
+  }
+
+  const overallScore = scores?.overall ?? 0;
+  let textColorClass = "text-red-500";
+  let backgroundColorClass = "bg-red-500/10";
+
+  if (overallScore >= 8) {
+    textColorClass = "text-green-500";
+    backgroundColorClass = "bg-green-500/10";
+  } else if (overallScore >= 5) {
+    textColorClass = "text-yellow-500";
+    backgroundColorClass = "bg-yellow-500/10";
   }
 
   return (
     <>
       <section className="container section-padding">
         <HeaderSection />
-        <div className="mb-12 text-center max-w-3xl mx-auto space-y-4">
-          <h3 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-2">
-            Precision architecture for advanced reasoning.
-          </h3>
-          <h1 className="tracking-tight text-4xl sm:text-6xl font-black text-gray-900 leading-none">
-            AI{" "}
-            <span className="text-primary bg-linear-to-r from-primary to-primary/70 bg-clip-text">
-              Helper
-            </span>
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-600 font-normal tracking-tight leading-relaxed max-w-2xl mx-auto">
-            Sculpt your intent into{" "}
-            <span className="font-semibold text-gray-900">
-              editorial-grade prompts
-            </span>{" "}
-            using the Pentagram framework.
-          </p>
-        </div>
-
-        <Button
-          variant="secondary"
-          className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
-          onClick={handleCreateNewDraft}
-        >
-          New Draft
-        </Button>
 
         {/* only for testing */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 text-gray-50">
           <button type="button" onClick={handleFillTestData}>
             test prompt
           </button>
         </div>
-
-        {/* only for testing */}
-        <button
-          type="button"
-          onClick={() => {
-            handleFillTestData();
-
-            setResult(mockEvaluationResponse);
-
-            setScores(null);
-            setEvaluation(null);
-          }}
-        >
-          test evaluate
-        </button>
-        {/* only for testing */}
 
         <FormSection control={control} resetField={resetField} watch={watch} />
 
@@ -940,10 +963,12 @@ export default function Home() {
           isLoading={isLoading}
         />
 
-        {isLoading && (
-          <>
-            <ResultSkeleton />
-          </>
+        {isLoading && <ResultSkeleton />}
+
+        {!isLoading && !result && !error && (
+          <div className="m-6 py-3 border-l-4 border-primary pl-6 pr-4 rounded-lg shadow-md bg-secondary/80 text-gray-800">
+            Your generated response will appear here once you submit the form.
+          </div>
         )}
 
         {/* GENERATED AI RESPONSE */}
@@ -959,50 +984,87 @@ export default function Home() {
         )}
 
         {!isLoading && error && (
-          <div className="mt-6 p-4 border rounded bg-red-50 text-red-600">
-            <p>{error}</p>
-            <button
-              onClick={handleSubmit(onSubmit)}
-              className="mt-3 px-4 py-2 rounded-md border border-red-300 bg-red-50 text-red-600 
-                hover:bg-red-100 transition-all duration-150 active:scale-[0.98]"
-            >
-              Retry
-            </button>
-          </div>
-        )}
+          <div className="mt-8 p-6 rounded-2xl bg-destructive/5 border border-destructive/20 shadow-xs flex flex-col items-center sm:items-start sm:flex-row gap-4 transition-all duration-200 animate-in fade-in slide-in-from-top-2">
+            {/* Alert symbol anchor */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive text-xl font-semibold">
+              !
+            </div>
 
-        {!isLoading && !result && !error && (
-          <div className="mt-6 py-3 border-l-4 border-primary pl-6 pr-4 rounded-lg shadow-md bg-secondary/80 text-gray-800">
-            Your generated response will appear here once you submit the form.
-          </div>
-        )}
+            {/* Content tracking */}
+            <div className="flex-1 text-center sm:text-left space-y-1">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-destructive">
+                Execution Error
+              </h4>
+              <p className="text-sm text-gray-600 leading-relaxed">{error}</p>
 
-        {result && (
-          <div className="mt-4 flex justify-center">
-            {isGuest ? (
-              <p className="text-base font-light text-black/70 text-center">
-                <Link
-                  href="/login"
-                  className="underline font-semibold hover:text-slate-800 transition-colors"
+              <div className="pt-2">
+                <button
+                  onClick={handleSubmit(onSubmit)}
+                  className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
                 >
-                  Sign in
-                </Link>{" "}
-                if you would like your prompt to be scored and evaluated.
-              </p>
-            ) : (
+                  Try again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* actions once prompt is assembled */}
+        {!isGuest && result && (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto w-full">
+            {/* action 1: Reset */}
+            {hasAssembled && (
               <Button
                 variant="secondary"
-                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
-                onClick={handleSubmit(onScore)}
-                disabled={isRescoreDisabled}
+                onClick={handleCreateNewDraft}
+                className="w-full h-12 text-base font-semibold shadow-sm transition-all duration-150"
               >
-                {!scores
-                  ? "Score Prompt"
-                  : isSameAsLastScore
-                    ? "Scored"
-                    : "Re-score prompt"}
+                New Prompt
               </Button>
             )}
+
+            {/* action 2: Score */}
+            <Button
+              variant="secondary"
+              className="w-full h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
+              onClick={handleSubmit(onScore)}
+              disabled={isRescoreDisabled}
+            >
+              {!scores
+                ? "Score Prompt"
+                : isSameAsLastScore
+                  ? "Scored"
+                  : "Re-score prompt"}
+            </Button>
+
+            {/* action 3: Evaluate */}
+            <Button
+              variant="secondary"
+              className="w-full h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
+              onClick={handleSubmit(onEvaluate)}
+              disabled={isEvaluating || !!evaluation}
+            >
+              {isEvaluating
+                ? "Evaluating..."
+                : evaluation
+                  ? "Evaluated"
+                  : "Evaluate Response"}
+            </Button>
+          </div>
+        )}
+
+        {/* placeholder for guests */}
+        {isGuest && result && (
+          <div className="mt-4 flex justify-center">
+            <p className="text-base font-light text-black/70 text-center">
+              <Link
+                href="/login"
+                className="underline font-semibold hover:text-slate-800 transition-colors"
+              >
+                Sign in
+              </Link>{" "}
+              if you would like your prompt to be scored and evaluated.
+            </p>
           </div>
         )}
 
@@ -1016,17 +1078,20 @@ export default function Home() {
                 <h3 className="mb-4 text-center uppercase font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
                   Prompt Scoring
                 </h3>
-                <p className="text-sm text-gray-500">
-                  Weakest field:{" "}
-                  <span className="font-medium text-destructive capitalize">
-                    {scores.weakest_field}
-                  </span>
-                </p>
+                {scores.suggestion ? (
+                  <p className="text-sm text-gray-500">
+                    Weakest field:{" "}
+                    <span className="font-medium text-destructive capitalize">
+                      {scores.weakest_field}
+                    </span>
+                  </p>
+                ) : null}
               </div>
-
               {/* score badge */}
-              <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl self-start md:self-auto">
-                <span className="text-xs font-bold uppercase tracking-wider">
+              <div
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl self-start md:self-auto transition-colors duration-200 ${textColorClass} ${backgroundColorClass}`}
+              >
+                <span className="text-xs font-bold uppercase tracking-wider opacity-80">
                   Overall
                 </span>
                 <span className="text-2xl font-black">{scores.overall}/10</span>
@@ -1081,15 +1146,30 @@ export default function Home() {
         )}
 
         {scoreError && !isScoring && (
-          <div className="mt-6 p-4 border rounded bg-red-50 text-red-600">
-            <p>{scoreError}</p>
-            <button
-              onClick={handleSubmit(onScore)}
-              className="mt-3 px-4 py-2 rounded-md border border-red-300 bg-red-50 text-red-600 
-                hover:bg-red-100 transition-all duration-150 active:scale-[0.98]"
-            >
-              Retry
-            </button>
+          <div className="mt-8 p-6 rounded-2xl bg-destructive/5 border border-destructive/20 shadow-xs flex flex-col items-center sm:items-start sm:flex-row gap-4 transition-all duration-200 animate-in fade-in slide-in-from-top-2">
+            {/* Alert symbol anchor */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive text-xl font-semibold">
+              !
+            </div>
+
+            {/* Content tracking */}
+            <div className="flex-1 text-center sm:text-left space-y-1">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-destructive">
+                Error
+              </h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {scoreError}
+              </p>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => onScore}
+                  className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
+                >
+                  Retry Request
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1099,56 +1179,6 @@ export default function Home() {
               <span className="text-sm">⚠️</span>
               <p className="leading-relaxed">{saveError}</p>
             </div>
-          </div>
-        )}
-
-        {/* SUGGESTED IMPROVEMENT */}
-        {scores && (
-          <div className="mt-4 p-6 border-l-4 border-primary rounded-xl shadow-sm bg-secondary/50">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              💡 Suggested improvement
-            </h3>
-
-            {scores.suggestion ? (
-              <>
-                <div className="p-4 bg-white border border-gray-200/80 rounded-lg mb-3 text-sm text-gray-800 whitespace-pre-wrap shadow-inner font-mono tracking-light leading-relaxed">
-                  {scores.suggestion.improved}
-                </div>
-
-                <p className="text-sm text-gray-600 mb-4 italic leading-normal">
-                  {scores.suggestion.explanation}
-                </p>
-
-                <div className="flex justify-center">
-                  <Button
-                    variant="secondary"
-                    className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
-                    onClick={() => setIsModalOpen(true)}
-                  >
-                    Review Suggestion
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-500 italic text-sm py-2">
-                No suggestion needed — prompt is strong enough.
-              </p>
-            )}
-          </div>
-        )}
-
-        {result && (
-          <div className="mt-4 flex justify-center">
-            {isGuest ? null : (
-              <Button
-                variant="secondary"
-                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
-                onClick={handleSubmit(onEvaluate)}
-                disabled={isEvaluating}
-              >
-                {isEvaluating ? "Evaluating..." : "Evaluate Response"}
-              </Button>
-            )}
           </div>
         )}
 

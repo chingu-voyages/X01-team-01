@@ -35,7 +35,7 @@ export default function FormSection({
 
   return (
     <div className="p-6 md:p-8 rounded-2xl bg-linear-to-b from-gray-100 to-primary border-l border-r border-primary/20 shadow-xs mt-8">
-      <form className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-3 gap-6">
+      <form className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {FIELDS.map((field, index) => {
           const hasValue = values[field.id] !== "";
 
@@ -44,7 +44,7 @@ export default function FormSection({
               key={field.id}
               className={`${
                 index === 2 ? "md:col-span-2 " : ""
-              } bg-white rounded-xl shadow-sm border border-gray-200 transition-all duration-200 relative overflow-hidden ${
+              } bg-white/45 backdrop-blur-md rounded-xl shadow-xs border border-white-40 transition-all duration-200 relative overflow-hidden ${
                 hasValue
                   ? "border-primary/30 shadow-xs"
                   : "hover:border-gray-300"
@@ -66,10 +66,13 @@ export default function FormSection({
                     />
                   </div>
                   <Button
-                    onClick={() => setFieldValue(field.id, "")}
+                    onClick={() => {
+                      setFieldValue(field.id, "");
+                      resetField(field.id, { defaultValue: "" });
+                    }}
                     disabled={values[field.id] === ""}
                     variant="ghost"
-                    className="h-7 px-2 hover:bg-gray-100 text-gray-400 disabled:opacity-30 hover:text-gray-600 transition-colors gap-1 rounded-md"
+                    className="h-7 px-2 hover:bg-gray-300 text-gray-600 disabled:opacity-30 hover:text-gray-600 transition-colors gap-1 rounded-md"
                   >
                     <RotateCcw size={14} />
                     <span className="text-xs font-medium">Reset</span>

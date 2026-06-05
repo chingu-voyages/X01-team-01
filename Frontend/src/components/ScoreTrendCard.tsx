@@ -12,14 +12,11 @@ interface ScoreTrendCardProps {
 }
 
 export default function ScoreTrendCard({ sessions }: ScoreTrendCardProps) {
-  //no scores, card is hidden
-  if (!sessions || sessions.length === 0) {
-    return null;
-  }
+  const hasSessions = sessions && sessions.length > 0;
 
-  const latestScore = sessions[sessions.length - 1].score;
+  const latestScore = hasSessions ? sessions[sessions.length - 1].score : 0;
 
-  const scoreValues = sessions.slice(-10).map((s) => s.score);
+  const scoreValues = hasSessions ? sessions.slice(-10).map((s) => s.score) : [];
 
   //line colors depending on the latestScore
   let lineColor = "#ef4444"; //Default Red
