@@ -237,23 +237,23 @@ export default function HistoryList({
 
   if (currentView === "favourites" && displayedPrompts.length === 0) {
     return (
-  <div className="relative bg-primary/10 border border-dashed border-primary/20 rounded-xl p-4 min-h-30 flex items-center justify-center select-none">
-    {/* Ghost favorite icon indicator */}
-    <div className="absolute top-2 right-2 text-xl p-1.5 rounded-lg border border-primary/5 bg-background/30 text-gray-300">
-      ☆
-    </div>
+      <div className="relative bg-primary/10 border border-dashed border-primary/20 rounded-xl p-4 min-h-30 flex items-center justify-center select-none">
+        {/* Ghost favorite icon indicator */}
+        <div className="absolute top-2 right-2 text-xl p-1.5 rounded-lg border border-primary/5 bg-background/30 text-gray-300">
+          ☆
+        </div>
 
-    {/* Content matching the prompt card alignment */}
-    <div className="text-center space-y-1">
-      <h3 className="text-base font-semibold tracking-tight text-gray-400">
-        No favorites yet
-      </h3>
-      <p className="text-xs text-gray-400 max-w-xs mx-auto">
-        Star your best prompts to save them here for quick access.
-      </p>
-    </div>
-  </div>
-);
+        {/* Content matching the prompt card alignment */}
+        <div className="text-center space-y-1">
+          <h3 className="text-base font-semibold tracking-tight text-gray-400">
+            No favorites yet
+          </h3>
+          <p className="text-xs text-gray-400 max-w-xs mx-auto">
+            Star your best prompts to save them here for quick access.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -274,7 +274,7 @@ export default function HistoryList({
           <Button
             variant="outline"
             onClick={loadMore}
-            className="w-2xl h-11 mt-6 text-sm font-semibold tracking-wide border-primary/20 bg-background hover:bg-primary/5 text-primary rounded-xl shadow-xs transition-all duration-200"
+            className="w-full sm:w-2xl h-11 mt-6 text-sm font-semibold tracking-wide border-primary/20 bg-background hover:bg-primary/5 text-primary rounded-xl shadow-xs transition-all duration-200"
           >
             Load More
           </Button>
