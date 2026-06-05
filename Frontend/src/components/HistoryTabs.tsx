@@ -1,6 +1,5 @@
-import { Search, ListFilter } from "lucide-react";
+import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 interface HistoryTabsProps {
   favouritesCount: number;
@@ -54,7 +53,6 @@ export default function HistoryTabs({ favouritesCount, searchQuery, setSearchQue
           />
 
           <Search className="w-4 md:w-6 hover:cursor-pointer" />
-          <ListFilter className="w-4 md:w-6 hover:cursor-pointer" />
         </div>
       </div>
     </>

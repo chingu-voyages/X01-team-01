@@ -51,7 +51,7 @@ export default function HistoryList({
     }
     return true;
   });*/
-  const displayedPrompts = visiblePrompts
+  const displayedPrompts = allData
     .filter((item) => {
       // favourites filter
       if (currentView === "favourites") {
