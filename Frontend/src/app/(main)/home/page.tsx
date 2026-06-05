@@ -948,15 +948,28 @@ export default function Home() {
         )}
 
         {!isLoading && error && (
-          <div className="mt-6 p-4 border rounded bg-red-50 text-red-600">
-            <p>{error}</p>
-            <button
-              onClick={handleSubmit(onSubmit)}
-              className="mt-3 px-4 py-2 rounded-md border border-red-300 bg-red-50 text-red-600 
-                hover:bg-red-100 transition-all duration-150 active:scale-[0.98]"
-            >
-              Retry
-            </button>
+          <div className="mt-8 p-6 rounded-2xl bg-destructive/5 border border-destructive/20 shadow-xs flex flex-col items-center sm:items-start sm:flex-row gap-4 transition-all duration-200 animate-in fade-in slide-in-from-top-2">
+            {/* Alert symbol anchor */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive text-xl font-semibold">
+              !
+            </div>
+
+            {/* Content tracking */}
+            <div className="flex-1 text-center sm:text-left space-y-1">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-destructive">
+                Execution Error
+              </h4>
+              <p className="text-sm text-gray-600 leading-relaxed">{error}</p>
+
+              <div className="pt-2">
+                <button
+                  onClick={handleSubmit(onSubmit)}
+                  className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1091,15 +1104,30 @@ export default function Home() {
         )}
 
         {scoreError && !isScoring && (
-          <div className="mt-6 p-4 border rounded bg-red-50 text-red-600">
-            <p>{scoreError}</p>
-            <button
-              onClick={handleSubmit(onScore)}
-              className="mt-3 px-4 py-2 rounded-md border border-red-300 bg-red-50 text-red-600 
-                hover:bg-red-100 transition-all duration-150 active:scale-[0.98]"
-            >
-              Retry
-            </button>
+          <div className="mt-8 p-6 rounded-2xl bg-destructive/5 border border-destructive/20 shadow-xs flex flex-col items-center sm:items-start sm:flex-row gap-4 transition-all duration-200 animate-in fade-in slide-in-from-top-2">
+            {/* Alert symbol anchor */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive text-xl font-semibold">
+              !
+            </div>
+
+            {/* Content tracking */}
+            <div className="flex-1 text-center sm:text-left space-y-1">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-destructive">
+                Execution Error
+              </h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {scoreError}
+              </p>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => onScore}
+                  className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
+                >
+                  Retry Request
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
