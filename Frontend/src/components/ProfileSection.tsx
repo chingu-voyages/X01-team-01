@@ -36,7 +36,7 @@ export default function ProfileSection() {
       </div>
 
       {/* Right Column Group: Account Actions */}
-      <div className="flex gap-2.5 justify-center items-center w-full md:w-auto">
+{/*       <div className="flex gap-2.5 justify-center items-center w-full md:w-auto">
         <Link href="/home" passHref className="w-full md:w-auto">
           <Button
             variant="default"
@@ -45,7 +45,7 @@ export default function ProfileSection() {
             New Prompt
           </Button>
         </Link>
-      </div>
+      </div> */}
     </div>
   );
 }

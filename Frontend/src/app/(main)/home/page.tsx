@@ -245,6 +245,7 @@ export default function Home() {
 
     const isDemo =
       new URLSearchParams(window.location.search).get("demo") === "true";
+
     if (isDemo) {
       const manualPrompt = `Persona: ${formData.persona}
         Context: ${formData.context}
@@ -253,6 +254,7 @@ export default function Home() {
         Constraint: ${formData.constraint}`;
 
       setResult(manualPrompt);
+      setHasAssembled(true);
       setIsLoading(false);
 
       return;
@@ -436,6 +438,34 @@ export default function Home() {
     setIsEvaluating(true);
     setEvaluation(null);
     setEvaluationError(null);
+
+    /* ------ DEMO MODE ------- */
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+
+    if (isDemo) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const mockEvalData = {
+        completeness: "Partially answered",
+        format_compliance:
+          "Complies with the structure requirements but lacks the requested tone restrictions.",
+        missing_elements: [
+          {
+            requirement: "Tone Consistency",
+            issue:
+              "The output drops the requested persona dialogue constraints in the final paragraphs.",
+          },
+        ],
+        suggested_follow_up:
+          "Rewrite the final paragraph ensuring that the exact tonal character style constraints are maintained continuously.",
+      };
+
+      setEvaluation(mockEvalData as any);
+      setIsEvaluating(false);
+      return;
+    }
+    /* ------ END DEMO MODE ------- */
 
     try {
       const res = await fetch("/api/evaluate", {
@@ -830,16 +860,26 @@ export default function Home() {
       resetAnalysisPanels();
       setHasAssembled(false);
 
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-
       toast.success("New draft created");
     } catch (uiErr) {
       console.error("Local UI reset failed:", uiErr);
       toast.error("Failed to create new draft");
     }
+
+    setTimeout(() => {
+      document.querySelector("section")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+
+    /* ----- DEMO MODE ------ */
+
+    const isDemo =
+      new URLSearchParams(window.location.search).get("demo") === "true";
+    if (isDemo) return;
+
+    /* ----- END DEMO MODE ------ */
 
     try {
       const q = query(
@@ -913,22 +953,6 @@ export default function Home() {
             test prompt
           </button>
         </div>
-
-        {/* only for testing */}
-        <button
-          type="button"
-          onClick={() => {
-            handleFillTestData();
-
-            setResult(mockEvaluationResponse);
-
-            setScores(null);
-            setEvaluation(null);
-          }}
-        >
-          test evaluate
-        </button>
-        {/* only for testing */}
 
         <FormSection control={control} resetField={resetField} watch={watch} />
 
@@ -1127,7 +1151,7 @@ export default function Home() {
             {/* Content tracking */}
             <div className="flex-1 text-center sm:text-left space-y-1">
               <h4 className="text-sm font-bold uppercase tracking-wider text-destructive">
-                Execution Error
+                Error
               </h4>
               <p className="text-sm text-gray-600 leading-relaxed">
                 {scoreError}
