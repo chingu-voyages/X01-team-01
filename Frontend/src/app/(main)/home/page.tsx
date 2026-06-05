@@ -1042,9 +1042,13 @@ export default function Home() {
               variant="secondary"
               className="w-full h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
               onClick={handleSubmit(onEvaluate)}
-              disabled={isEvaluating}
+              disabled={isEvaluating || !!evaluation}
             >
-              {isEvaluating ? "Evaluating..." : "Evaluate Response"}
+              {isEvaluating
+                ? "Evaluating..."
+                : evaluation
+                  ? "Evaluated"
+                  : "Evaluate Response"}
             </Button>
           </div>
         )}
