@@ -309,9 +309,9 @@ export default function Home() {
       }
 
       if (err.name === "AbortError") {
-        setError("Request timed out. Please try again.");
+        setError("Request timed out.");
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Something went wrong.");
       }
     } finally {
       clearTimeout(timeout);
@@ -415,7 +415,7 @@ export default function Home() {
       }
     } catch (err) {
       console.error("Scoring error:", err);
-      setScoreError("Unable to score your prompt. Please try again.");
+      setScoreError("Unable to score your prompt.");
     } finally {
       setIsScoring(false);
     }
@@ -466,7 +466,7 @@ export default function Home() {
     } catch (err) {
       console.error("Evaluation error:", err);
 
-      setEvaluationError("Evaluation unavailable. Please try again.");
+      setEvaluationError("Evaluation unavailable.");
     } finally {
       setIsEvaluating(false);
     }
