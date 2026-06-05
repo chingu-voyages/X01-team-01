@@ -235,6 +235,27 @@ export default function HistoryList({
     );
   }
 
+  if (currentView === "favourites" && displayedPrompts.length === 0) {
+    return (
+  <div className="relative bg-primary/10 border border-dashed border-primary/20 rounded-xl p-4 min-h-30 flex items-center justify-center select-none">
+    {/* Ghost favorite icon indicator */}
+    <div className="absolute top-2 right-2 text-xl p-1.5 rounded-lg border border-primary/5 bg-background/30 text-gray-300">
+      ☆
+    </div>
+
+    {/* Content matching the prompt card alignment */}
+    <div className="text-center space-y-1">
+      <h3 className="text-base font-semibold tracking-tight text-gray-400">
+        No favorites yet
+      </h3>
+      <p className="text-xs text-gray-400 max-w-xs mx-auto">
+        Star your best prompts to save them here for quick access.
+      </p>
+    </div>
+  </div>
+);
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
