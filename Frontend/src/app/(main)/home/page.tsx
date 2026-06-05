@@ -83,6 +83,8 @@ export default function Home() {
 
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const [hasAssembled, setHasAssembled] = useState(false);
+
   //current user status
   const status = useAppSelector((state) => state.auth.status);
 
@@ -313,6 +315,7 @@ export default function Home() {
       }
     } finally {
       clearTimeout(timeout);
+      setHasAssembled(true);
       setIsLoading(false);
     }
   }
@@ -870,6 +873,8 @@ export default function Home() {
       setScores(null);
       resetAnalysisPanels();
 
+      setHasAssembled(false);
+
       toast.success("New draft created");
     } catch (err) {
       console.error(err);
@@ -881,14 +886,6 @@ export default function Home() {
     <>
       <section className="container section-padding">
         <HeaderSection />
-
-        <Button
-          variant="secondary"
-          className="w-full md:w-full h-12 text-base font-bold relative overflow-hidden"
-          onClick={handleCreateNewDraft}
-        >
-          New Draft
-        </Button>
 
         {/* only for testing */}
         <div className="flex gap-4">
@@ -922,10 +919,12 @@ export default function Home() {
           isLoading={isLoading}
         />
 
-        {isLoading && (
-          <>
-            <ResultSkeleton />
-          </>
+        {isLoading && <ResultSkeleton />}
+
+        {!isLoading && !result && !error && (
+          <div className="m-6 py-3 border-l-4 border-primary pl-6 pr-4 rounded-lg shadow-md bg-secondary/80 text-gray-800">
+            Your generated response will appear here once you submit the form.
+          </div>
         )}
 
         {/* GENERATED AI RESPONSE */}
@@ -953,38 +952,60 @@ export default function Home() {
           </div>
         )}
 
-        {!isLoading && !result && !error && (
-          <div className="mt-6 py-3 border-l-4 border-primary pl-6 pr-4 rounded-lg shadow-md bg-secondary/80 text-gray-800">
-            Your generated response will appear here once you submit the form.
+        
+
+        {/* actions once prompt is assembled */}
+        {!isGuest && result && (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto w-full">
+            {/* action 1: Reset */}
+            {hasAssembled && (
+              <Button
+                variant="secondary"
+                onClick={handleCreateNewDraft}
+                className="w-full h-12 text-base font-semibold shadow-sm transition-all duration-150"
+              >
+                New Prompt
+              </Button>
+            )}
+
+            {/* action 2: Score */}
+            <Button
+              variant="secondary"
+              className="w-full h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
+              onClick={handleSubmit(onScore)}
+              disabled={isRescoreDisabled}
+            >
+              {!scores
+                ? "Score Prompt"
+                : isSameAsLastScore
+                  ? "Scored"
+                  : "Re-score prompt"}
+            </Button>
+
+            {/* action 3: Evaluate */}
+            <Button
+              variant="secondary"
+              className="w-full h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
+              onClick={handleSubmit(onEvaluate)}
+              disabled={isEvaluating}
+            >
+              {isEvaluating ? "Evaluating..." : "Evaluate Response"}
+            </Button>
           </div>
         )}
 
-        {result && (
+        {/* placeholder for guests */}
+        {isGuest && result && (
           <div className="mt-4 flex justify-center">
-            {isGuest ? (
-              <p className="text-base font-light text-black/70 text-center">
-                <Link
-                  href="/login"
-                  className="underline font-semibold hover:text-slate-800 transition-colors"
-                >
-                  Sign in
-                </Link>{" "}
-                if you would like your prompt to be scored and evaluated.
-              </p>
-            ) : (
-              <Button
-                variant="secondary"
-                className="w-full mt-4 md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
-                onClick={handleSubmit(onScore)}
-                disabled={isRescoreDisabled}
+            <p className="text-base font-light text-black/70 text-center">
+              <Link
+                href="/login"
+                className="underline font-semibold hover:text-slate-800 transition-colors"
               >
-                {!scores
-                  ? "Score Prompt"
-                  : isSameAsLastScore
-                    ? "Scored"
-                    : "Re-score prompt"}
-              </Button>
-            )}
+                Sign in
+              </Link>{" "}
+              if you would like your prompt to be scored and evaluated.
+            </p>
           </div>
         )}
 
@@ -1082,56 +1103,6 @@ export default function Home() {
               <span className="text-sm">⚠️</span>
               <p className="leading-relaxed">{saveError}</p>
             </div>
-          </div>
-        )}
-
-        {/* SUGGESTED IMPROVEMENT */}
-        {scores && (
-          <div className="mt-4 p-6 border-l-4 border-primary rounded-xl shadow-sm bg-secondary/50">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              💡 Suggested improvement
-            </h3>
-
-            {scores.suggestion ? (
-              <>
-                <div className="p-4 bg-white border border-gray-200/80 rounded-lg mb-3 text-sm text-gray-800 whitespace-pre-wrap shadow-inner font-mono tracking-light leading-relaxed">
-                  {scores.suggestion.improved}
-                </div>
-
-                <p className="text-sm text-gray-600 mb-4 italic leading-normal">
-                  {scores.suggestion.explanation}
-                </p>
-
-                <div className="flex justify-center">
-                  <Button
-                    variant="secondary"
-                    className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
-                    onClick={() => setIsModalOpen(true)}
-                  >
-                    Review Suggestion
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-gray-500 italic text-sm py-2">
-                No suggestion needed — prompt is strong enough.
-              </p>
-            )}
-          </div>
-        )}
-
-        {result && (
-          <div className="mt-4 flex justify-center">
-            {isGuest ? null : (
-              <Button
-                variant="secondary"
-                className="w-full md:w-2xl h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
-                onClick={handleSubmit(onEvaluate)}
-                disabled={isEvaluating}
-              >
-                {isEvaluating ? "Evaluating..." : "Evaluate Response"}
-              </Button>
-            )}
           </div>
         )}
 
