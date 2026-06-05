@@ -890,6 +890,18 @@ export default function Home() {
     }
   }
 
+  const overallScore = scores?.overall ?? 0;
+  let textColorClass = "text-red-500";
+  let backgroundColorClass = "bg-red-500/10";
+
+  if (overallScore >= 8) {
+    textColorClass = "text-green-500";
+    backgroundColorClass = "bg-green-500/10";
+  } else if (overallScore >= 5) {
+    textColorClass = "text-yellow-500";
+    backgroundColorClass = "bg-yellow-500/10";
+  }
+
   return (
     <>
       <section className="container section-padding">
@@ -1048,8 +1060,10 @@ export default function Home() {
                 ) : null}
               </div>
               {/* score badge */}
-              <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl self-start md:self-auto">
-                <span className="text-xs font-bold uppercase tracking-wider">
+              <div
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl self-start md:self-auto transition-colors duration-200 ${textColorClass} ${backgroundColorClass}`}
+              >
+                <span className="text-xs font-bold uppercase tracking-wider opacity-80">
                   Overall
                 </span>
                 <span className="text-2xl font-black">{scores.overall}/10</span>
