@@ -602,8 +602,7 @@ export default function Home() {
       if (hasInitializedRef.current) return;
       hasInitializedRef.current = true;
 
-      const isFreshLogin =
-        sessionStorage.getItem("fresh_login") === "true";
+      const isFreshLogin = sessionStorage.getItem("fresh_login") === "true";
 
       try {
         // ==========================
@@ -689,8 +688,7 @@ export default function Home() {
           setCurrentDraftId(existingDraft.id);
           setDraftReady(true);
 
-          const isFreshLogin =
-            sessionStorage.getItem("fresh_login") === "true";
+          const isFreshLogin = sessionStorage.getItem("fresh_login") === "true";
 
           if (isFreshLogin) {
             sessionStorage.removeItem("fresh_login");
@@ -771,11 +769,11 @@ export default function Home() {
             if (data.score?.overall != null) {
               setScores({
                 global_scores: {
-                  clarity: data.score.clarity ?? 0,
-                  specificity: data.score.specificity ?? 0,
-                  format_guidance: data.score.format_guidance ?? 0,
+                  clarity: data.score.clarity ?? null,
+                  specificity: data.score.specificity ?? null,
+                  format_guidance: data.score.format_guidance ?? null,
                 },
-                overall: data.score.overall ?? 0,
+                overall: data.score.overall ?? null,
                 field_grades: {
                   persona: 0,
                   context: 0,
@@ -1152,13 +1150,22 @@ export default function Home() {
                 <h3 className="mb-4 text-center uppercase font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
                   Prompt Scoring
                 </h3>
-                {scores.suggestion ? (
-                  <p className="text-sm text-gray-500">
-                    Weakest field:{" "}
-                    <span className="font-medium text-destructive capitalize">
-                      {scores.weakest_field}
-                    </span>
-                  </p>
+                {scores.suggestion && shouldShowSuggestion(scores) ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-gray-500">
+                      Weakest field:{" "}
+                      <span className="font-medium text-destructive capitalize">
+                        {scores.weakest_field}
+                      </span>
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsModalOpen(true)}
+                      className="w-full h-10 rounded-xl text-xs font-semibold tracking-wide border-primary/20 text-primary hover:bg-primary/5"
+                    >
+                      View suggestion →
+                    </Button>
+                  </div>
                 ) : null}
               </div>
               {/* score badge */}
