@@ -155,23 +155,9 @@ export default function Home() {
 
   const PENTAGRAM_STORAGE_KEY = "pentagram_form";
 
-  //Needed for redux rehydration so EvaluationButton doesnt think prompt fields are empty when they arn'tw
   useEffect(() => {
-    if (!user) return; // IMPORTANT: don't load drafts without a user
-
-    const saved = localStorage.getItem(PENTAGRAM_STORAGE_KEY);
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      reset(parsed);
-      persistFormToRedux(parsed);
-
-      setResult(parsed.gemini_result || null);
-    }
-
     setHasHydrated(true);
-  }, [reset, user]);
+  }, []);
 
   //Helper function that centralizes redux writes so redux is updated on save only
   function persistFormToRedux(formData: Record<FieldId, string>) {
@@ -594,6 +580,18 @@ export default function Home() {
     setLastScoredValues(null);
   }
 
+  const hasSyncedFromRedux = useRef(false);
+
+  useEffect(() => {
+    if (hasSyncedFromRedux.current) return;
+    hasSyncedFromRedux.current = true;
+
+    const hasAnyValue = Object.values(values).some((v) => v.trim() !== "");
+    if (hasAnyValue) {
+      reset(values); // sync Redux → RHF when returning to page
+    }
+  }, []);
+
   //logic-for-checking-if-user-has-any-documents
   useEffect(() => {
     if (!user) return;
@@ -602,7 +600,8 @@ export default function Home() {
       if (hasInitializedRef.current) return;
       hasInitializedRef.current = true;
 
-      const isFreshLogin = sessionStorage.getItem("fresh_login") === "true";
+      const isNewSession = !sessionStorage.getItem("session_active");
+      sessionStorage.setItem("session_active", "true");
 
       try {
         // ==========================
@@ -688,9 +687,7 @@ export default function Home() {
           setCurrentDraftId(existingDraft.id);
           setDraftReady(true);
 
-          const isFreshLogin = sessionStorage.getItem("fresh_login") === "true";
-
-          if (isFreshLogin) {
+          if (isNewSession) {
             sessionStorage.removeItem("fresh_login");
 
             await Promise.all(
@@ -733,8 +730,6 @@ export default function Home() {
               id: newDraftRef.id,
             });
 
-            localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
-
             setCurrentDraftId(newDraftRef.id);
             setDraftReady(true);
 
@@ -758,11 +753,6 @@ export default function Home() {
             setScores(null);
           } else {
             const data = existingDraft.data();
-
-            if (data.fields) {
-              reset(data.fields);
-              persistFormToRedux(data.fields);
-            }
 
             setResult(data.gemini_result || null);
 
@@ -845,7 +835,7 @@ export default function Home() {
     }
   }
 
-  //resers-prompt-fields-on-new-user-login
+  //resets-prompt-fields-on-new-user-login
   useEffect(() => {
     if (!user) {
       reset({
@@ -855,8 +845,6 @@ export default function Home() {
         output: "",
         constraint: "",
       });
-
-      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
     }
   }, [user]);
 
@@ -878,8 +866,6 @@ export default function Home() {
       constraint: watchedConstraint,
       gemini_result: result,
     };
-
-    localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -905,7 +891,7 @@ export default function Home() {
     if (!user) return;
 
     try {
-      // 🔥 1. RESET FORM
+      // 1. RESET FORM
       reset({
         persona: "",
         context: "",
@@ -914,10 +900,7 @@ export default function Home() {
         constraint: "",
       });
 
-      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
-      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
-
-      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
+      // 2. CLEAR REDUX PENTAGRAM STATE
       persistFormToRedux({
         persona: "",
         context: "",
@@ -926,7 +909,7 @@ export default function Home() {
         constraint: "",
       });
 
-      // 🔥 4. CLEAR UI STATE
+      // 3. CLEAR UI STATE
       setResult(null);
       setScores(null);
       resetAnalysisPanels();

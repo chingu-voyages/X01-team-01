@@ -420,13 +420,6 @@ export default function HistoryList({
 
                     onDataChange(updated);
 
-                    const formDataForStorage = selectedPrompt.fields;
-
-                    localStorage.setItem(
-                      "pentagram_form",
-                      JSON.stringify(formDataForStorage),
-                    );
-
                     dispatch(
                       setEntireForm({
                         persona: selectedPrompt.fields.persona,
