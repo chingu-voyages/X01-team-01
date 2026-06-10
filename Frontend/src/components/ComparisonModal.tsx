@@ -31,57 +31,62 @@ export default function ComparisonModal({
   return (
     <div>
       <Dialog open={isModalOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[90vw] md:max-w-3xl flex flex-col max-h-[90vh] p-6 rounded-xl">
-
+        <DialogContent className="max-w-[90vw] md:max-w-2xl p-0 rounded-2xl overflow-hidden gap-0">
           {/* header */}
-          <DialogHeader className="p-4 border-b border-primary/20">
-            <DialogTitle className="text-xl md:text-2xl font-semibold tracking-tight text-center md:text-left mb-4 uppercase text-gray-900">
-              Review suggested change  <span className="text-primary italic">- {suggestion?.field}</span> 
-            </DialogTitle>
-            <DialogDescription className="text-base md:text-lg leading-snug sm:leading-relaxed text-gray-600 text-center md:text-left">
+          <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-[11px] font-medium tracking-widest uppercase text-gray-500 bg-gray-100 border border-gray-200 px-2.5 py-0.5 rounded-md">
+                  {suggestion?.field}
+                </span>
+                <span className="text-sm text-gray-400">Suggested Change</span>
+              </div>
+            </div>
+            <DialogDescription className="text-sm text-gray-500 leading-relaxed">
               {suggestion?.explanation}
             </DialogDescription>
-          </DialogHeader>
+          </div>
 
           {/* comparison grid */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              {/* original text */}
-              <div className="flex flex-col space-y-2">
-                <h3 className="text-sm lg:text-base font-semibold uppercase tracking-wider text-gray-500">
-                  Your original text
-                </h3>
-                <div className="h-full p-4 rounded-xl border border-gray-100 bg-gray-50/50 text-sm md:text-base text-gray-700 sm:leading-relaxed">
-                  {suggestion?.original}
-                </div>
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* original */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium tracking-widest uppercase text-gray-400">
+                  Original
+                </span>
               </div>
+              <div className="flex-1 p-4 rounded-xl border border-gray-100 bg-gray-50 text-sm text-gray-500 leading-relaxed">
+                {suggestion?.original}
+              </div>
+            </div>
 
-              {/* suggestion text */}
-              <div className="flex flex-col space-y-2">
-                <h3 className="text-sm lg:text-base font-semibold uppercase tracking-wider text-primary">
+            {/* suggestion */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium tracking-widest uppercase text-primary">
                   Suggestion
-                </h3>
-                <div className="h-full p-4 rounded-xl border border-primary/20 bg-primary/5 text-sm lg:text-base text-gray-900 leading-relaxed">
-                  {suggestion?.improved}
-                </div>
+                </span>
+              </div>
+              <div className="flex-1 p-4 rounded-xl border border-primary/20 bg-primary/5 text-sm text-gray-900 leading-relaxed">
+                {suggestion?.improved}
               </div>
             </div>
           </div>
 
-          {/* buttons */}
-          <div className="flex flex-col md:flex-row gap-2 justify-around pt-4 border-t border-gray-100">
+          {/* footer */}
+          <div className="px-5 pb-5 pt-1 flex justify-around gap-2">
             <Button
               variant="outline"
-              onClick={() => onClose()}
-              className="w-full md:w-auto px-5 h-11 rounded-xl text-sm font-semibold"
+              onClick={onClose}
+              className="h-9 px-4 text-sm font-medium rounded-xl"
             >
               Keep original
             </Button>
             <Button
               variant="default"
               onClick={handleApplyClick}
-              className="w-full md:w-auto px-5 h-11 rounded-xl text-sm font-semibold shadow-sm"
+              className="h-9 px-4 text-sm font-medium rounded-xl"
             >
               Apply suggestion
             </Button>
