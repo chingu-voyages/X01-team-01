@@ -100,6 +100,7 @@ export default function Home() {
             <Link
               href="/login"
               className="underline font-semibold hover:text-white transition-colors"
+              aria-label="Sign in"
             >
               Sign in
             </Link>{" "}
@@ -486,20 +487,36 @@ export default function Home() {
     }
   }
 
-  function handleUseFollowUp(followUp: string) {
-    // update RHF only
-    setValue("task", followUp, {
-      shouldDirty: true,
-      shouldValidate: true,
+  async function handleUseFollowUp(followUp: string) {
+    setIsLoading(true);
+    setError(null);
+
+    toast.info("Running follow-up prompt...");
+
+    document.querySelector("[data-submit-button]")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
     });
 
-    // persist snapshot to Redux
-    persistFormToRedux({
-      ...watch(),
-      task: followUp,
-    });
+    try {
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `Previous response:\n${result}\n\nFollow-up instruction:\n${followUp}`,
+        }),
+      });
 
-    toast.success("Task field updated with follow-up.");
+      if (!res.ok) throw new Error("Server error.");
+
+      const data = await res.json();
+      setResult(data.text);
+      setEvaluation(null); // clear old evaluation since result changed
+    } catch (err) {
+      setError("Something went wrong with the follow-up.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function handleApplySuggestion(field: FieldId, newValue: string) {
@@ -1006,11 +1023,13 @@ export default function Home() {
           </button>
         </div>
 
+        {/* always-visible subtle reset */}
         <div className="flex justify-end mt-2">
           <button
             type="button"
             onClick={handleCreateNewDraft}
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Restart button"
           >
             Start fresh
           </button>
@@ -1018,14 +1037,15 @@ export default function Home() {
 
         <FormSection control={control} resetField={resetField} watch={watch} />
 
-        {/* always-visible subtle reset */}
-
-        <SubmitButton
-          isValid={canSubmit}
-          handleSubmit={handleSubmit}
-          onSubmit={onSubmit}
-          isLoading={isLoading}
-        />
+        <div data-submit-button>
+          <SubmitButton
+            isValid={canSubmit}
+            handleSubmit={handleSubmit}
+            onSubmit={onSubmit}
+            isLoading={isLoading}
+            aria-label="Submit button"
+          />
+        </div>
 
         {isLoading && <ResultSkeleton />}
 
@@ -1065,6 +1085,7 @@ export default function Home() {
                 <button
                   onClick={handleSubmit(onSubmit)}
                   className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
+                  aria-label="Try again button"
                 >
                   Try again
                 </button>
@@ -1082,6 +1103,7 @@ export default function Home() {
                 variant="secondary"
                 onClick={handleCreateNewDraft}
                 className="w-full h-12 text-base font-semibold shadow-sm transition-all duration-150"
+                aria-label="Restart button"
               >
                 New Prompt
               </Button>
@@ -1093,6 +1115,7 @@ export default function Home() {
               className="w-full h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
               onClick={handleSubmit(onScore)}
               disabled={isRescoreDisabled}
+              aria-label="Score button"
             >
               {!scores
                 ? "Score Prompt"
@@ -1107,6 +1130,7 @@ export default function Home() {
               className="w-full h-12 text-base font-semibold shadow-sm hover:bg-secondary/80 transition-colors"
               onClick={handleSubmit(onEvaluate)}
               disabled={isEvaluating || !!evaluation}
+              aria-label="Evaluate button"
             >
               {isEvaluating
                 ? "Evaluating..."
@@ -1124,6 +1148,7 @@ export default function Home() {
               <Link
                 href="/login"
                 className="underline font-semibold hover:text-slate-800 transition-colors"
+                aria-label="Login"
               >
                 Sign in
               </Link>{" "}
@@ -1154,6 +1179,7 @@ export default function Home() {
                       variant="outline"
                       onClick={() => setIsModalOpen(true)}
                       className="w-full h-10 rounded-xl text-xs font-semibold tracking-wide border-primary/20 text-primary hover:bg-primary/5"
+                      aria-label="View suggestion button"
                     >
                       View suggestion →
                     </Button>
@@ -1238,6 +1264,7 @@ export default function Home() {
                 <button
                   onClick={() => handleSubmit(onScore)()}
                   className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
+                  aria-label="Retry button"
                 >
                   Retry Request
                 </button>
