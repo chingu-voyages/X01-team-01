@@ -77,7 +77,7 @@ export default function HistoryList({
     });
 
   async function handleDelete(uid: string) {
-    if (!window.confirm("Are you sure you want to delete this prompt?")) return;
+    if (!window.confirm("Are you sure you want to delete this prompt?\nDeleting will affect your statistics in Prompt Analytics.")) return;
 
     try {
       const deletedPrompt = allData.find((p) => p.uid === uid);
@@ -419,13 +419,6 @@ export default function HistoryList({
                     }));
 
                     onDataChange(updated);
-
-                    const formDataForStorage = selectedPrompt.fields;
-
-                    localStorage.setItem(
-                      "pentagram_form",
-                      JSON.stringify(formDataForStorage),
-                    );
 
                     dispatch(
                       setEntireForm({

@@ -83,7 +83,7 @@ export default function Home() {
 
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [hasAssembled, setHasAssembled] = useState(false);
+  const hasAssembled = !!result;
 
   //current user status
   const status = useAppSelector((state) => state.auth.status);
@@ -155,23 +155,9 @@ export default function Home() {
 
   const PENTAGRAM_STORAGE_KEY = "pentagram_form";
 
-  //Needed for redux rehydration so EvaluationButton doesnt think prompt fields are empty when they arn'tw
   useEffect(() => {
-    if (!user) return; // IMPORTANT: don't load drafts without a user
-
-    const saved = localStorage.getItem(PENTAGRAM_STORAGE_KEY);
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      reset(parsed);
-      persistFormToRedux(parsed);
-
-      setResult(parsed.gemini_result || null);
-    }
-
     setHasHydrated(true);
-  }, [reset, user]);
+  }, []);
 
   //Helper function that centralizes redux writes so redux is updated on save only
   function persistFormToRedux(formData: Record<FieldId, string>) {
@@ -254,7 +240,6 @@ export default function Home() {
         Constraint: ${formData.constraint}`;
 
       setResult(manualPrompt);
-      setHasAssembled(true);
       setIsLoading(false);
 
       return;
@@ -317,7 +302,6 @@ export default function Home() {
       }
     } finally {
       clearTimeout(timeout);
-      setHasAssembled(true);
       setIsLoading(false);
     }
   }
@@ -594,6 +578,18 @@ export default function Home() {
     setLastScoredValues(null);
   }
 
+  const hasSyncedFromRedux = useRef(false);
+
+  useEffect(() => {
+    if (hasSyncedFromRedux.current) return;
+    hasSyncedFromRedux.current = true;
+
+    const hasAnyValue = Object.values(values).some((v) => v.trim() !== "");
+    if (hasAnyValue) {
+      reset(values); // sync Redux → RHF when returning to page
+    }
+  }, []);
+
   //logic-for-checking-if-user-has-any-documents
   useEffect(() => {
     if (!user) return;
@@ -602,8 +598,8 @@ export default function Home() {
       if (hasInitializedRef.current) return;
       hasInitializedRef.current = true;
 
-      const isFreshLogin =
-        sessionStorage.getItem("fresh_login") === "true";
+      const isNewSession = !sessionStorage.getItem("session_active");
+      sessionStorage.setItem("session_active", "true");
 
       try {
         // ==========================
@@ -689,10 +685,7 @@ export default function Home() {
           setCurrentDraftId(existingDraft.id);
           setDraftReady(true);
 
-          const isFreshLogin =
-            sessionStorage.getItem("fresh_login") === "true";
-
-          if (isFreshLogin) {
+          if (isNewSession) {
             sessionStorage.removeItem("fresh_login");
 
             await Promise.all(
@@ -735,8 +728,6 @@ export default function Home() {
               id: newDraftRef.id,
             });
 
-            localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
-
             setCurrentDraftId(newDraftRef.id);
             setDraftReady(true);
 
@@ -761,21 +752,16 @@ export default function Home() {
           } else {
             const data = existingDraft.data();
 
-            if (data.fields) {
-              reset(data.fields);
-              persistFormToRedux(data.fields);
-            }
-
             setResult(data.gemini_result || null);
 
             if (data.score?.overall != null) {
               setScores({
                 global_scores: {
-                  clarity: data.score.clarity ?? 0,
-                  specificity: data.score.specificity ?? 0,
-                  format_guidance: data.score.format_guidance ?? 0,
+                  clarity: data.score.clarity ?? null,
+                  specificity: data.score.specificity ?? null,
+                  format_guidance: data.score.format_guidance ?? null,
                 },
-                overall: data.score.overall ?? 0,
+                overall: data.score.overall ?? null,
                 field_grades: {
                   persona: 0,
                   context: 0,
@@ -847,7 +833,7 @@ export default function Home() {
     }
   }
 
-  //resers-prompt-fields-on-new-user-login
+  //resets-prompt-fields-on-new-user-login
   useEffect(() => {
     if (!user) {
       reset({
@@ -857,8 +843,6 @@ export default function Home() {
         output: "",
         constraint: "",
       });
-
-      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
     }
   }, [user]);
 
@@ -880,8 +864,6 @@ export default function Home() {
       constraint: watchedConstraint,
       gemini_result: result,
     };
-
-    localStorage.setItem(PENTAGRAM_STORAGE_KEY, JSON.stringify(data));
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -907,7 +889,7 @@ export default function Home() {
     if (!user) return;
 
     try {
-      // 🔥 1. RESET FORM
+      // 1. RESET FORM
       reset({
         persona: "",
         context: "",
@@ -916,10 +898,7 @@ export default function Home() {
         constraint: "",
       });
 
-      // 🔥 2. CLEAR LOCAL STORAGE (IMPORTANT)
-      localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
-
-      // 🔥 3. CLEAR REDUX PENTAGRAM STATE
+      // 2. CLEAR REDUX PENTAGRAM STATE
       persistFormToRedux({
         persona: "",
         context: "",
@@ -928,11 +907,10 @@ export default function Home() {
         constraint: "",
       });
 
-      // 🔥 4. CLEAR UI STATE
+      // 3. CLEAR UI STATE
       setResult(null);
       setScores(null);
       resetAnalysisPanels();
-      setHasAssembled(false);
 
       toast.success("New draft created");
     } catch (uiErr) {
@@ -1028,7 +1006,19 @@ export default function Home() {
           </button>
         </div>
 
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={handleCreateNewDraft}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Start fresh
+          </button>
+        </div>
+
         <FormSection control={control} resetField={resetField} watch={watch} />
+
+        {/* always-visible subtle reset */}
 
         <SubmitButton
           isValid={canSubmit}
@@ -1152,13 +1142,22 @@ export default function Home() {
                 <h3 className="mb-4 text-center uppercase font-light tracking-tight text-2xl underline underline-offset-4 decoration-primary decoration-2">
                   Prompt Scoring
                 </h3>
-                {scores.suggestion ? (
-                  <p className="text-sm text-gray-500">
-                    Weakest field:{" "}
-                    <span className="font-medium text-destructive capitalize">
-                      {scores.weakest_field}
-                    </span>
-                  </p>
+                {scores.suggestion && shouldShowSuggestion(scores) ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-gray-500">
+                      Weakest field:{" "}
+                      <span className="font-medium text-destructive capitalize">
+                        {scores.weakest_field}
+                      </span>
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsModalOpen(true)}
+                      className="w-full h-10 rounded-xl text-xs font-semibold tracking-wide border-primary/20 text-primary hover:bg-primary/5"
+                    >
+                      View suggestion →
+                    </Button>
+                  </div>
                 ) : null}
               </div>
               {/* score badge */}
@@ -1237,7 +1236,7 @@ export default function Home() {
 
               <div className="pt-2">
                 <button
-                  onClick={() => onScore}
+                  onClick={() => handleSubmit(onScore)()}
                   className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
                 >
                   Retry Request
