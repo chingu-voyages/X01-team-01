@@ -63,6 +63,7 @@ export default function FormSection({
                       fieldId={field.id}
                       openHelpId={openHelpId}
                       setOpenHelpId={setOpenHelpId}
+                      aria-label="Help text button"
                     />
                   </div>
                   <Button
@@ -73,6 +74,7 @@ export default function FormSection({
                     disabled={values[field.id] === ""}
                     variant="ghost"
                     className="h-7 px-2 hover:bg-gray-300 text-gray-600 disabled:opacity-30 hover:text-gray-600 transition-colors gap-1 rounded-md"
+                    aria-label="Reset field button"
                   >
                     <RotateCcw size={14} />
                     <span className="text-xs font-medium">Reset</span>
