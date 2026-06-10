@@ -83,7 +83,7 @@ export default function Home() {
 
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [hasAssembled, setHasAssembled] = useState(false);
+  const hasAssembled = !!result;
 
   //current user status
   const status = useAppSelector((state) => state.auth.status);
@@ -240,7 +240,6 @@ export default function Home() {
         Constraint: ${formData.constraint}`;
 
       setResult(manualPrompt);
-      setHasAssembled(true);
       setIsLoading(false);
 
       return;
@@ -303,7 +302,6 @@ export default function Home() {
       }
     } finally {
       clearTimeout(timeout);
-      setHasAssembled(true);
       setIsLoading(false);
     }
   }
@@ -913,7 +911,6 @@ export default function Home() {
       setResult(null);
       setScores(null);
       resetAnalysisPanels();
-      setHasAssembled(false);
 
       toast.success("New draft created");
     } catch (uiErr) {
@@ -1009,7 +1006,19 @@ export default function Home() {
           </button>
         </div>
 
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={handleCreateNewDraft}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Start fresh
+          </button>
+        </div>
+
         <FormSection control={control} resetField={resetField} watch={watch} />
+
+        {/* always-visible subtle reset */}
 
         <SubmitButton
           isValid={canSubmit}
