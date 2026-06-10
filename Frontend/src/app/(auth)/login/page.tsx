@@ -57,12 +57,10 @@ export default function RegisterPage() {
           oauth_provider_id: providerData?.uid || firebaseUser.uid,
           display_name:
             providerName === "github"
-              ? providerData?.displayName ||
-                providerData?.screenName ||
-                firebaseUser.reloadUserInfo?.screenName ||
-                firebaseUser.displayName ||
+              ? firebaseUser.displayName ||
                 firebaseUser.email?.split("@")[0] ||
-                ""
+                providerData?.uid ||
+                "GitHub User"
               : firebaseUser.displayName || "",
           avatar_url: firebaseUser.photoURL || null,
           email: firebaseUser.email || "",
@@ -83,6 +81,10 @@ export default function RegisterPage() {
       }
 
       dispatch(setUser(userData));
+
+      //needed-for-blank-prompt-creation-on-login
+      sessionStorage.setItem("fresh_login", "true");
+
       router.push("/home");
     } catch (err: any) {
       setError(

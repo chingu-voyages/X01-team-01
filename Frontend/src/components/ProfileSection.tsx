@@ -7,6 +7,11 @@ import { RootState } from "@/redux/store";
 export default function ProfileSection() {
   const { user } = useSelector((state: RootState) => state.auth);
 
+  const displayName =
+    user?.display_name ||
+    user?.email?.split("@")[0] ||
+    "Guest";
+
   return (
     <div className="flex flex-col gap-4 items-center md:flex-row md:justify-between mb-6 pb-6 border-b border-gray-100">
       {/* Left Column Group: Avatar & Identity details */}
@@ -27,7 +32,7 @@ export default function ProfileSection() {
 
         <div className="flex flex-col justify-center px-4">
           <h2 className="text-lg md:text-3xl font-semibold tracking-tight text-gray-900">
-            {user?.display_name || "Guest"}
+            {displayName}
           </h2>
           <p className="text-xs md:text-sm font-mono text-gray-400 tracking-tight mt-0.5">
             {user?.email || ""}

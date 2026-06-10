@@ -36,20 +36,28 @@ googleProvider.setCustomParameters({
 });
 
 githubProvider.setCustomParameters({
-  login: "",
   allow_signup: "true",
 });
 
 // Google sign in
 async function signInWithGoogle() {
-  await signOut(auth);
-  return signInWithPopup(auth, googleProvider);
+  try {
+    await signOut(auth);
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    console.error("Google sign-in failed:", error);
+    throw error;
+  }
 }
 
 // GitHub sign in
 async function signInWithGithub() {
-  await signOut(auth);
-  return signInWithPopup(auth, githubProvider);
+  try {
+    return await signInWithPopup(auth, githubProvider);
+  } catch (error) {
+    console.error("GitHub sign-in failed:", error);
+    throw error;
+  }
 }
 
 // Logout

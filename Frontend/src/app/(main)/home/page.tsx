@@ -602,6 +602,9 @@ export default function Home() {
       if (hasInitializedRef.current) return;
       hasInitializedRef.current = true;
 
+      const isFreshLogin =
+        sessionStorage.getItem("fresh_login") === "true";
+
       try {
         // ==========================
         // ANALYTICS INITIALIZATION
@@ -686,33 +689,104 @@ export default function Home() {
           setCurrentDraftId(existingDraft.id);
           setDraftReady(true);
 
-          const data = existingDraft.data();
+          const isFreshLogin =
+            sessionStorage.getItem("fresh_login") === "true";
 
-          if (data.fields) {
-            reset(data.fields);
-            persistFormToRedux(data.fields);
-          }
+          if (isFreshLogin) {
+            sessionStorage.removeItem("fresh_login");
 
-          setResult(data.gemini_result || null);
+            await Promise.all(
+              snapshot.docs.map((d) =>
+                updateDoc(d.ref, {
+                  current_doc: false,
+                  updated_at: serverTimestamp(),
+                }),
+              ),
+            );
 
-          if (data.score?.overall != null) {
-            setScores({
-              global_scores: {
-                clarity: data.score.clarity ?? 0,
-                specificity: data.score.specificity ?? 0,
-                format_guidance: data.score.format_guidance ?? 0,
+            const newDraftRef = await addDoc(collection(db, "prompt_drafts"), {
+              user_id: user?.id,
+              created_at: serverTimestamp(),
+              updated_at: serverTimestamp(),
+              title: "Untitled Prompt",
+
+              fields: {
+                persona: "",
+                context: "",
+                task: "",
+                output: "",
+                constraint: "",
               },
-              overall: data.score.overall ?? 0,
-              field_grades: {
-                persona: 0,
-                context: 0,
-                task: 0,
-                output: 0,
-                constraint: 0,
+
+              score: {
+                clarity: null,
+                specificity: null,
+                format_guidance: null,
+                overall: null,
               },
-              weakest_field: "task",
-              suggestion: null,
+
+              gemini_result: "",
+              favorite: false,
+              words: 0,
+              current_doc: true,
             });
+
+            await updateDoc(newDraftRef, {
+              id: newDraftRef.id,
+            });
+
+            localStorage.removeItem(PENTAGRAM_STORAGE_KEY);
+
+            setCurrentDraftId(newDraftRef.id);
+            setDraftReady(true);
+
+            reset({
+              persona: "",
+              context: "",
+              task: "",
+              output: "",
+              constraint: "",
+            });
+
+            persistFormToRedux({
+              persona: "",
+              context: "",
+              task: "",
+              output: "",
+              constraint: "",
+            });
+
+            setResult(null);
+            setScores(null);
+          } else {
+            const data = existingDraft.data();
+
+            if (data.fields) {
+              reset(data.fields);
+              persistFormToRedux(data.fields);
+            }
+
+            setResult(data.gemini_result || null);
+
+            if (data.score?.overall != null) {
+              setScores({
+                global_scores: {
+                  clarity: data.score.clarity ?? 0,
+                  specificity: data.score.specificity ?? 0,
+                  format_guidance: data.score.format_guidance ?? 0,
+                },
+                overall: data.score.overall ?? 0,
+                field_grades: {
+                  persona: 0,
+                  context: 0,
+                  task: 0,
+                  output: 0,
+                  constraint: 0,
+                },
+                weakest_field: "task",
+                suggestion: null,
+              });
+            }
           }
         }
       } catch (err) {
