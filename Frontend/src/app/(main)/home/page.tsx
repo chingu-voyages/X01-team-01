@@ -1236,7 +1236,7 @@ export default function Home() {
 
               <div className="pt-2">
                 <button
-                  onClick={() => onScore}
+                  onClick={() => handleSubmit(onScore)()}
                   className="h-9 px-4 rounded-xl text-xs font-semibold tracking-wide border border-destructive/20 bg-background text-destructive hover:bg-destructive/5 shadow-xs active:scale-95 transition-all duration-200 cursor-pointer"
                 >
                   Retry Request
