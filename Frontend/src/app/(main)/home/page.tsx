@@ -486,20 +486,30 @@ export default function Home() {
     }
   }
 
-  function handleUseFollowUp(followUp: string) {
-    // update RHF only
-    setValue("task", followUp, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+  async function handleUseFollowUp(followUp: string) {
+    setIsLoading(true);
+    setError(null);
 
-    // persist snapshot to Redux
-    persistFormToRedux({
-      ...watch(),
-      task: followUp,
-    });
+    try {
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `Previous response:\n${result}\n\nFollow-up instruction:\n${followUp}`,
+        }),
+      });
 
-    toast.success("Task field updated with follow-up.");
+      if (!res.ok) throw new Error("Server error.");
+
+      const data = await res.json();
+      setResult(data.text);
+      setEvaluation(null); // clear old evaluation since result changed
+      toast.success("Response updated with follow-up.");
+    } catch (err) {
+      setError("Something went wrong with the follow-up.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function handleApplySuggestion(field: FieldId, newValue: string) {
